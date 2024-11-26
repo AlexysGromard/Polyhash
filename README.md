@@ -14,11 +14,11 @@ La syntaxe générale/minimale est
 
 # L'équipe
 
-- RABUSSEAU - mathis.rabusseau@etu.univ-nantes.fr
 
 À compléter par chaque personne: 1 ligne par personne, indiquant le nom et l'adresse mail de la personne, et chacun pousse ses informations.
 
 L'objectif de cette manipulation est de provoquer des conflits d'édition, qui surviennent quand un même fichier est modifié au même endroit par plusieurs personnes, et de voir comment on les résout.
 
+- RABUSSEAU Mathis - mathis.rabusseau@etu.univ-nantes.fr
 - GROMARD Alexys - alexys.gromard@etu.univ-nantes.fr
 - FOURNIER Bastien - bastien.fournier@etu.univ-nantes.fr
