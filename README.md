@@ -1,8 +1,10 @@
 # Projet Poly#
+Le projet Polyhash est un projet initié par Polytech Nantes. Il s'agit d'un projet de programmation en Python qui a pour but de coordonner des ballons en haute altitude pour fournir un accès à Internet dans des zones ciblées, en utilisant les courants de vent pour les déplacer. Voici les principaux éléments du projet :
+##### Contexte :
+* **Objectif** : Fournir un accès Internet dans des zones isolées grâce à une flotte de ballons équipés de transmetteurs LTE.
+* **Défi principal** : Les ballons ne peuvent pas se déplacer horizontalement par eux-mêmes, mais peuvent ajuster leur altitude pour exploiter les courants de vent.
 
-Décrire brièvement le projet ici.
-
-Le fichier `README.md` est écrit en [**Markdown**](https://docs.github.com/en/get-started/writing-on-github/getting-started-with-writing-and-formatting-on-github/basic-writing-and-formatting-syntax) et permet de soigner la _mise en forme_.
+A terme, l'objectif est de réaliser le meilleur score possible. Pour cela, il est nécessaire de déterminer la trajectoire optimale des ballons pour couvrir le plus de zones possibles.
 
 # Fonctionnement du projet
 
@@ -14,11 +16,7 @@ La syntaxe générale/minimale est
 
 # L'équipe
 
-
-À compléter par chaque personne: 1 ligne par personne, indiquant le nom et l'adresse mail de la personne, et chacun pousse ses informations.
-
-L'objectif de cette manipulation est de provoquer des conflits d'édition, qui surviennent quand un même fichier est modifié au même endroit par plusieurs personnes, et de voir comment on les résout.
-
 - RABUSSEAU Mathis - mathis.rabusseau@etu.univ-nantes.fr
 - GROMARD Alexys - alexys.gromard@etu.univ-nantes.fr
 - FOURNIER Bastien - bastien.fournier@etu.univ-nantes.fr
+- JOUAULT Lancelot - lancelot.jouault@etu.univ-nantes.fr
