@@ -19,5 +19,5 @@ def parse_challenge(filename: str) -> object:
         rows, columns, altitudes = [ int(v) for v in line.split() ]
 
         # ...
-
+    challenge = None
     return challenge
