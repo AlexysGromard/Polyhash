@@ -1,6 +1,6 @@
-# arbitator.py
+# arbitrator.py
 
-class Arbitator:
+class Arbitrator:
     '''
     Arbitrator class counts the score of a solution.
 
