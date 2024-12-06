@@ -23,17 +23,31 @@ if __name__ == "__main__":
 
 
     parser = argparse.ArgumentParser(description='Solve Poly# challenge.')
+    
+    # recupere param -challenge pour spécifier le fichier de data
     parser.add_argument('challenge', type=str,
                         help='challenge definition filename',
                         metavar="challenge.txt")
     
+    # recupere param -output pour spécifier le fichier de sortie
     parser.add_argument('output', type=str, default=None,
                         help='output filename',
                         metavar="sortie.txt")
     
+    # recupere param -display pour spécifier si on affiche ou non
+    parser.add_argument('-display', type=bool, default=False,
+                        help='Boolean to display or not (default: False)')
+
+    # recupere param -algo pour spécifier l'algorithme à utiliser
+    parser.add_argument('-algo', type=str, default=None,
+                        help='Algorithm to use (default: Mathis)')    
+    
     args = parser.parse_args()
     
-    Solver(args.challenge, args.output)
+
+    
+    
+    Solver(args.challenge, args.output, args.display, args.algo)
 
 
     
