@@ -1,6 +1,6 @@
 # arbitrator.py
 
-from models import *
+from .models import *
 
 class Arbitrator:
     '''
@@ -26,14 +26,15 @@ class Arbitrator:
         else:
             raise ValueError(f"Invalid grid size: height={height}, width={width}. Both must be > 0.")
 
-    def turn_score(self, balloons: list[Vector3], targets: list[Vector3], coverage_radius: int):
+    def turn_score(self, balloons: list[Vector3], targets: list[Vector3], coverage_radius: int, debug: bool = False) -> int:
         '''
         The function to count the score of a solution for one turn.
 
         Args:
-            balloons (list[list[int]]): The list of balloons.
+            balloons (list[vector]): The list of balloons.
             targets (list[vector]): The list of targets.
             coverage_radius (int) (optional): The coverage radius of the balloon.
+            debug (bool) (optional): The flag to print debug information.
         '''
         def columndist(c1, c2, grid_width):
             return min(abs(c1 - c2), grid_width - abs(c1 - c2))
@@ -51,19 +52,24 @@ class Arbitrator:
             '''
             return (r - u) ** 2 + columndist(c, v, self.get_grid_size()[1]) ** 2 <= coverage_radius ** 2
 
+        # Check if all arguments are provided correctly
+        if not balloons or not targets or coverage_radius < 0:
+            raise TypeError("Invalid arguments.")
+
         score = 0
 
         # Test for each target if it is covered by a balloon
         for target in targets:
             # Get radius
-            u, v = target.x, target.y # Target coordinates
+            v, u = target.x, target.y # Target coordinates
             for balloon in balloons:
-                r, c = balloon.x, balloon.y # Balloon coordinates
+                c, r = balloon.x, balloon.y # Balloon coordinates
                 # Check if the target is covered by the balloon
                 if is_covered(r, c, u, v, coverage_radius):
+                    if debug:
+                        print(f"Balloon at ({r}, {c}) covers target at ({u}, {v})")
                     score += 1
                     break
-
         return score
 
     def print_coverage_map(self):
