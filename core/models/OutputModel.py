@@ -1,23 +1,33 @@
+from dataclasses import dataclass
 
+@dataclass
 class OutputModel:
+    """
+    Class : OutputModel
+    A dataclass to represent and export the output of the simulation.
 
-    def __init__(self, trajet):
-        self.trajet = trajet
+    Attributes:
+        turns (int): The number of turns in the simulation.
+        num_balloons (int): The number of balloons in the simulation.
+        adjusments (list[list[int]]): A list of lists of integers representing the adjustments made to each balloon.
+    
+    Methods:
+        export_output_file: Writes the output data to a file in the required format.
+    """
+    turns: int
+    num_balloons: int
+    adjustments: list[list[int]]
 
-    def generateFile(self, outputPath: str):
-        pass
-
-    def compile(self) -> str:
-        """Retourne la string complète du fichier d'output en fonction du trajet donné dans init
-
-        Returns:
-            str: String de sortie normalisée
+    def export_output_file(self, file_path: str) -> None:
         """
-        out = ""
+        Writes the output data to a file in the required format.
 
-        for row in self.trajet:
-            
-            for ballon in row:
-                out += str(ballon) + " "
-            out += "\n"
-        return out
+        Parameters:
+            file_path (str): The path to the output file.
+        """
+        try:
+            with open(file_path, 'w') as file:
+                for turn in self.adjustments:
+                    file.write(" ".join(map(str, turn)) + "\n")
+        except Exception as e:
+            raise IOError(f"Failed to write output to file: {e}")
