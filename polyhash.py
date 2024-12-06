@@ -44,7 +44,7 @@ if __name__ == "__main__":
     
     args = parser.parse_args()
     
-    print(args)
+
     
     
     Solver(args.challenge, args.output, args.display, args.algo)
