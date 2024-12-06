@@ -1,4 +1,3 @@
-from dataModel import *
 import random
 
 class Vector3:
@@ -27,13 +26,13 @@ class Vector3:
 
 class AlgoMathis:
 
-    def compute(self, data: DataModel):
+    def compute(self, data: 'DataModel'):
         return self.process(data)
 
     def __convertData(self):
         pass
 
-    def process(self, d: DataModel):
+    def process(self, d: 'DataModel'):
 
         #Stocke l'historique
         trajet = []
@@ -58,7 +57,7 @@ class AlgoMathis:
             trajet.append(trajetRow)
         return trajet
     
-    def randomAlt(self,d: DataModel, place: Vector3) -> Vector3:
+    def randomAlt(self,d: 'DataModel', place: Vector3) -> 'Vector3':
         """Retourne une altitude random correcte pour le ballon"""
         correct = []
         for i in range(-1, 3):
@@ -66,7 +65,7 @@ class AlgoMathis:
                 correct.append(i)
         place.z += correct[random.randint(0, len(correct))]
 
-    def nextPlace(self, d: DataModel, place: Vector3) -> Vector3 | False: 
+    def nextPlace(self, d: 'DataModel', place: Vector3) -> Vector3 : 
         """
         Retourne la nouvelle place d'un ballon en fonction de sa position place(Vector3)
         et des vents présents dans d(DataModel)

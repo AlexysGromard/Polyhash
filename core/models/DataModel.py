@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from typing import List
-from Vector3 import Vector3
+from .Vector3 import Vector3
 
 @dataclass
 class DataModel:
