@@ -47,7 +47,8 @@ if __name__ == "__main__":
 
     
     
-    Solver(args.challenge, args.output, args.display, args.algo)
-
+    solver = Solver(args.challenge, args.output, args.display, args.algo)   # crée une instance de Solver
+    solver.run()                                                            # lance les calculs de l'algorithme
+    solver.post_process()                                                   # génère le fichier de sortie et vérifie les résultats
 
     
