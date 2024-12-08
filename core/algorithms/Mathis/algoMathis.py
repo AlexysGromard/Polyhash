@@ -94,7 +94,6 @@ class AlgoMathis:
         
         #Changement de position
         wind = d.wind_grids[place.z - 1][place.x][place.y]
-        print(wind)
         new = Vector3(
             place.x +wind.x,
             place.y +wind.y,
