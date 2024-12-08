@@ -31,8 +31,8 @@ class Arbitrator:
         The function to count the score of a solution for one turn.
 
         Args:
-            balloons (list[vector]): The list of balloons.
-            targets (list[vector]): The list of targets.
+            balloons (list[vector]): The list of balloons. Vector3(x, y) where x is the row and y is the column.
+            targets (list[vector]): The list of targets. Vector3(x, y) where x is the row and y is the column.
             coverage_radius (int) (optional): The coverage radius of the balloon.
             debug (bool) (optional): The flag to print debug information.
         '''
