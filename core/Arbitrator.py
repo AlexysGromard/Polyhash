@@ -61,9 +61,9 @@ class Arbitrator:
         # Test for each target if it is covered by a balloon
         for target in targets:
             # Get radius
-            v, u = target.x, target.y # Target coordinates
+            u, v = target.x, target.y # Target coordinates
             for balloon in balloons:
-                c, r = balloon.x, balloon.y # Balloon coordinates
+                r, c = balloon.x, balloon.y # Balloon coordinates
                 # Check if the target is covered by the balloon
                 if is_covered(r, c, u, v, coverage_radius):
                     if debug:

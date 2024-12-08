@@ -58,18 +58,18 @@ class TestTurn_score(unittest.TestCase):
         # Test the case where the grid is 10x10 and the radius is 1
         arbitrator = Arbitrator(10, 10)
         ballons = [
-            Vector3(2, 3, 0),
-            Vector3(8, 2, 0),
-            Vector3(5, 5, 0)
+            Vector3(2, 3),
+            Vector3(8, 2),
+            Vector3(5, 5)
         ]
         targets = [
-            Vector3(2, 2, 0),
-            Vector3(8, 1, 0),
-            Vector3(3, 3, 0),
-            Vector3(4, 5, 0),
-            Vector3(6, 6, 0),
-            Vector3(7, 6, 0),
-            Vector3(3, 8, 0)
+            Vector3(2, 2),
+            Vector3(8, 1),
+            Vector3(3, 3),
+            Vector3(4, 5),
+            Vector3(6, 6),
+            Vector3(7, 6),
+            Vector3(3, 8)
         ]
         coverage_radius = 1
         res = arbitrator.turn_score(ballons, targets, coverage_radius, False)
@@ -79,17 +79,41 @@ class TestTurn_score(unittest.TestCase):
         # Test the case where the grid is 10x10 and the radius is 2
         arbitrator = Arbitrator(10, 10)
         ballons = [
-            Vector3(5, 5, 0),
-            Vector3(8, 3, 0)
+            Vector3(5, 5),
+            Vector3(3, 8)
         ]
         targets = [
-            Vector3(0, 3, 0),
-            Vector3(3, 6, 0),
-            Vector3(4, 6, 0),
-            Vector3(5, 5, 0),
-            Vector3(7, 5, 0),
-            Vector3(8, 2, 0)
+            Vector3(3, 0),
+            Vector3(6, 3),
+            Vector3(6, 4),
+            Vector3(5, 5),
+            Vector3(5, 7),
+            Vector3(2, 8)
         ]
         coverage_radius = 2
         res = arbitrator.turn_score(ballons, targets, coverage_radius, False)
         self.assertEqual(res, 5)
+    
+    def test_subject(self):
+        # Test the case where the grid is 3x5 and the radius is 2 for 5 turns
+        arbitrator = Arbitrator(3, 5)
+        ballons_per_turn = [
+            Vector3(1, 3),
+            Vector3(0, 3),
+            Vector3(0, 0),
+            Vector3(0, 1),
+            Vector3(0, 2)
+        ]
+        targets = [
+            Vector3(0, 2),
+            Vector3(0, 4)
+        ]
+        coverage_radius = 1
+        
+        # Run tests
+        total_score = 0
+        for i in range(5):
+            res = arbitrator.turn_score([ballons_per_turn[i]], targets, coverage_radius, False)
+            total_score += res
+
+        self.assertEqual(total_score, 5)
