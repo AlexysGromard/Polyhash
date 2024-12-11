@@ -35,11 +35,25 @@ class Arbitrator:
             targets (list[vector]): The list of targets. Vector3(x, y) where x is the row and y is the column.
             coverage_radius (int) (optional): The coverage radius of the balloon.
             debug (bool) (optional): The flag to print debug information.
+
+        Returns:
+            int: The score of the solution.
         '''
-        def columndist(c1, c2, grid_width):
+        def columndist(c1, c2, grid_width) -> int:
+            '''
+            The function to calculate the distance between two columns.
+
+            Args:
+                c1 (int): The first column. 
+                c2 (int): The second column.
+                grid_width (int): The width of the grid.
+
+            Returns:
+                int: The distance between two columns.
+            '''
             return min(abs(c1 - c2), grid_width - abs(c1 - c2))
 
-        def is_covered(r, c, u, v, coverage_radius):
+        def is_covered(r, c, u, v, coverage_radius) -> bool:
             '''
             The function to check if the target is covered by the balloon.
 
@@ -49,6 +63,9 @@ class Arbitrator:
                 u (int): The row of the balloon.
                 v (int): The column of the balloon.
                 coverage_radius (int): The coverage radius of the balloon.
+            
+            Returns:
+                bool: True if the target is covered by the balloon, False otherwise.
             '''
             return (r - u) ** 2 + columndist(c, v, self.get_grid_size()[1]) ** 2 <= coverage_radius ** 2
 
