@@ -117,3 +117,38 @@ class TestTurn_score(unittest.TestCase):
             total_score += res
 
         self.assertEqual(total_score, 5)
+
+    def test_two_ballons_on_same_target_coverage_1(self):
+        # Test the case where two ballons are on the same target
+        arbitrator = Arbitrator(10, 10)
+        ballons = [
+            Vector3(4, 4),
+            Vector3(4, 6),
+        ]
+        targets = [
+            Vector3(5, 4),
+            Vector3(4, 5),
+        ]
+        coverage_radius = 1
+
+        # Run tests
+        res = arbitrator.turn_score(ballons, targets, coverage_radius, False)
+        self.assertEqual(res, 2)
+
+    def test_two_ballons_on_same_target_coverage_2(self):
+        # Test the case where two ballons are on the same target
+        arbitrator = Arbitrator(10, 10)
+        ballons = [
+            Vector3(4, 4),
+            Vector3(4, 6),
+        ]
+        targets = [
+            Vector3(3, 5),
+            Vector3(4, 5),
+            Vector3(4, 6),
+        ]
+        coverage_radius = 2
+
+        # Run tests
+        res = arbitrator.turn_score(ballons, targets, coverage_radius, False)
+        self.assertEqual(res, 3)
