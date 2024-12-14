@@ -12,7 +12,7 @@ class Arbitrator:
         target_cells (list[Vector3]): The list of target cells.
         coverage_radius (int): The coverage radius of the balloons.
     '''
-    def __init__(self, width: int, height: int, target_cells: list[Vector3], coverage_radius: int):
+    def __init__(self, data_model: DataModel):
         '''
         The constructor for Arbitrator class.
 
@@ -22,18 +22,18 @@ class Arbitrator:
             target_cells (list[Vector3]): The list of target cells.
             coverage_radius (int): The coverage radius of the balloons.
         '''
-        self.score: int = 0
-        # Check if the target cells are valid
-        if all(isinstance(cell, Vector3) for cell in target_cells):
-            self.target_cells = target_cells
-        else:
+        # Validate and initialize attributes
+        if not isinstance(data_model.target_cells, list) or not all(isinstance(cell, Vector3) for cell in data_model.target_cells):
             raise TypeError("target_cells must be a list of Vector3 objects.")
+        if not isinstance(data_model.coverage_radius, int) or data_model.coverage_radius < 0:
+            raise ValueError("coverage_radius must be a non-negative integer.")
 
-        # Check if the coverage radius is valid
-        if coverage_radius >= 0:
-            self.coverage_radius = coverage_radius
-        else:
-            raise ValueError(f"Invalid coverage radius: {coverage_radius}. Must be > 0.")
+        self.score: int = 0
+        self.target_cells: list[Vector3] = data_model.target_cells
+        self.coverage_radius: int = data_model.coverage_radius
+
+        width: int = data_model.cols
+        height: int = data_model.rows
 
         # Initialize the coverage map
         if height > 0 and width > 0:

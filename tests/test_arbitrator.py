@@ -26,7 +26,8 @@ class TestArbitratorInit(unittest.TestCase):
         Expected: ValueError
         '''
         with self.assertRaises(ValueError):
-            Arbitrator(0, 0, [Vector3(0, 0)], 0)
+            data_model = DataModel(rows=0, cols=0, coverage_radius=0, target_cells=[Vector3(0, 0)])
+            Arbitrator(data_model)
 
     def test_negative_grid_size(self):
         '''
@@ -35,7 +36,8 @@ class TestArbitratorInit(unittest.TestCase):
         Expected: ValueError
         '''
         with self.assertRaises(ValueError):
-            Arbitrator(-1, -1, [Vector3(0, 0)], 0)
+            data_model = DataModel(rows=-1, cols=-1, coverage_radius=0, target_cells=[Vector3(0, 0)])
+            Arbitrator(data_model)
 
     def test_valid_grid_size(self):
         '''
@@ -44,14 +46,14 @@ class TestArbitratorInit(unittest.TestCase):
         Expected: The coverage map is initialized correctly
         '''
         for values_in, values_out in [
-            ((1, 1, [Vector3(0, 0)], 0), [[0]]),
-            ((2, 2, [Vector3(0, 0)], 0), [[0, 0], [0, 0]]),
-            ((3, 3, [Vector3(0, 0)], 0), [[0, 0, 0], [0, 0, 0], [0, 0, 0]]),
-            ((5, 3, [Vector3(0, 0)], 0), [[0, 0, 0, 0, 0], [0, 0, 0, 0, 0], [0, 0, 0, 0, 0]])
+            (DataModel(rows=1, cols=1, coverage_radius=0, target_cells=[Vector3(0, 0)]), [[0]]),
+            (DataModel(rows=2, cols=2, coverage_radius=0, target_cells=[Vector3(0, 0)]), [[0, 0], [0, 0]]),
+            (DataModel(rows=3, cols=3, coverage_radius=0, target_cells=[Vector3(0, 0)]), [[0, 0, 0], [0, 0, 0], [0, 0, 0]]),
+            (DataModel(rows=3, cols=5, coverage_radius=0, target_cells=[Vector3(0, 0)]), [[0, 0, 0, 0, 0], [0, 0, 0, 0, 0], [0, 0, 0, 0, 0]])
         ]:
             with self.subTest(values_in=values_in, values_out=values_out):
                 # Run tests
-                arbitrator = Arbitrator(*values_in)
+                arbitrator = Arbitrator(values_in)
                 self.assertEqual(arbitrator.get_coverage_map(), values_out)
     
     def test_invalid_target_cells(self):
@@ -61,7 +63,7 @@ class TestArbitratorInit(unittest.TestCase):
         Expected: TypeError
         '''
         with self.assertRaises(TypeError):
-            Arbitrator(1, 1, [0], 0)
+            Arbitrator(DataModel(rows=1, cols=1, coverage_radius=0, target_cells=0))
 
     def test_negative_coverage_radius(self):
         '''
@@ -70,7 +72,7 @@ class TestArbitratorInit(unittest.TestCase):
         Expected: ValueError
         '''
         with self.assertRaises(ValueError):
-            Arbitrator(1, 1, [Vector3(0, 0)], -1)
+            Arbitrator(DataModel(rows=1, cols=1, coverage_radius=-1, target_cells=[Vector3(0, 0)]))
         
     def test_valid_coverage_radius(self):
         '''
@@ -79,14 +81,14 @@ class TestArbitratorInit(unittest.TestCase):
         Expected: The coverage radius is initialized correctly
         '''
         for values_in, values_out in [
-            ((1, 1, [Vector3(0, 0)], 0), 0),
-            ((1, 1, [Vector3(0, 0)], 1), 1),
-            ((1, 1, [Vector3(0, 0)], 2), 2),
-            ((1, 1, [Vector3(0, 0)], 3), 3)
+            (DataModel(rows=1, cols=1, coverage_radius=0, target_cells=[Vector3(0, 0)]), 0),
+            (DataModel(rows=1, cols=1, coverage_radius=1, target_cells=[Vector3(0, 0)]), 1),
+            (DataModel(rows=1, cols=1, coverage_radius=2, target_cells=[Vector3(0, 0)]), 2),
+            (DataModel(rows=1, cols=1, coverage_radius=3, target_cells=[Vector3(0, 0)]), 3)
         ]:
             with self.subTest(values_in=values_in, values_out=values_out):
                 # Run tests
-                arbitrator = Arbitrator(*values_in)
+                arbitrator = Arbitrator(values_in)
                 self.assertEqual(arbitrator.coverage_radius, values_out)
 
 class TestTurn_score(unittest.TestCase):
@@ -99,7 +101,7 @@ class TestTurn_score(unittest.TestCase):
 
         Expected: TypeError
         '''
-        arbitrator = Arbitrator(1, 1, [Vector3(0, 0)], 0)
+        arbitrator = Arbitrator(DataModel(rows=1, cols=1, coverage_radius=0, target_cells=[Vector3(0, 0)]))
         with self.assertRaises(TypeError):
             arbitrator.turn_score()
 
@@ -109,9 +111,9 @@ class TestTurn_score(unittest.TestCase):
 
         Expected: TypeError
         '''
-        arbitrator = Arbitrator(1, 1, [Vector3(0, 0)], 0)
+        arbitrator = Arbitrator(DataModel(rows=1, cols=1, coverage_radius=0, target_cells=[Vector3(0, 0)]))
         with self.assertRaises(TypeError):
-            arbitrator.turn_score([], [], -2)
+            arbitrator.turn_score([])
 
     def test_radius_1(self):
         '''
@@ -133,8 +135,8 @@ class TestTurn_score(unittest.TestCase):
             Vector3(7, 6),
             Vector3(3, 8)
         ]
-        arbitrator = Arbitrator(10, 10, targets, 1) 
-        res = arbitrator.turn_score(ballons, False)
+        arbitrator = Arbitrator(DataModel(rows=10, cols=10, coverage_radius=1, target_cells=targets)) 
+        res = arbitrator.turn_score(ballons)
         self.assertEqual(res, 4)
 
     def test_radius_2(self):
@@ -155,7 +157,7 @@ class TestTurn_score(unittest.TestCase):
             Vector3(5, 7),
             Vector3(2, 8)
         ]
-        arbitrator = Arbitrator(10, 10, targets, 2)
+        arbitrator = Arbitrator(DataModel(rows=10, cols=10, coverage_radius=2, target_cells=targets))
         res = arbitrator.turn_score(ballons, False)
         self.assertEqual(res, 5)
     
@@ -176,12 +178,12 @@ class TestTurn_score(unittest.TestCase):
             Vector3(0, 2),
             Vector3(0, 4)
         ]
-        arbitrator = Arbitrator(5, 3, targets, 1)
+        arbitrator = Arbitrator(DataModel(rows=3, cols=5, coverage_radius=1, target_cells=targets))
 
         # Run tests
         total_score = 0
         for i in range(5):
-            res = arbitrator.turn_score([ballons_per_turn[i]], False)
+            res = arbitrator.turn_score([ballons_per_turn[i]])
             total_score += res
 
         self.assertEqual(total_score, 5)
@@ -200,10 +202,10 @@ class TestTurn_score(unittest.TestCase):
             Vector3(5, 4),
             Vector3(4, 5),
         ]
-        arbitrator = Arbitrator(10, 10, targets, 1)
+        arbitrator = Arbitrator(DataModel(rows=10, cols=10, coverage_radius=1, target_cells=targets))
 
         # Run tests
-        res = arbitrator.turn_score(ballons, False)
+        res = arbitrator.turn_score(ballons)
         self.assertEqual(res, 2)
 
     def test_two_ballons_on_same_target_coverage_2(self):
@@ -221,8 +223,8 @@ class TestTurn_score(unittest.TestCase):
             Vector3(4, 5),
             Vector3(4, 6),
         ]
-        arbitrator = Arbitrator(10, 10, targets, 2)
+        arbitrator = Arbitrator(DataModel(rows=10, cols=10, coverage_radius=2, target_cells=targets))
 
         # Run tests
-        res = arbitrator.turn_score(ballons, False)
+        res = arbitrator.turn_score(ballons)
         self.assertEqual(res, 3)
