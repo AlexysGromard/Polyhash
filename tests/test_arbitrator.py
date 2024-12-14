@@ -26,7 +26,7 @@ class TestArbitratorInit(unittest.TestCase):
         Expected: ValueError
         '''
         with self.assertRaises(ValueError):
-            Arbitrator(0, 0, Vector3(0, 0), 0)
+            Arbitrator(0, 0, [Vector3(0, 0)], 0)
 
     def test_negative_grid_size(self):
         '''
@@ -35,7 +35,7 @@ class TestArbitratorInit(unittest.TestCase):
         Expected: ValueError
         '''
         with self.assertRaises(ValueError):
-            Arbitrator(-1, -1, Vector3(0, 0), 0)
+            Arbitrator(-1, -1, [Vector3(0, 0)], 0)
 
     def test_valid_grid_size(self):
         '''
@@ -44,10 +44,10 @@ class TestArbitratorInit(unittest.TestCase):
         Expected: The coverage map is initialized correctly
         '''
         for values_in, values_out in [
-            ((1, 1, Vector3(0, 0), 0), [[0]]),
-            ((2, 2, Vector3(0, 0), 0), [[0, 0], [0, 0]]),
-            ((3, 3, Vector3(0, 0), 0), [[0, 0, 0], [0, 0, 0], [0, 0, 0]]),
-            ((5, 3, Vector3(0, 0), 0), [[0, 0, 0, 0, 0], [0, 0, 0, 0, 0], [0, 0, 0, 0, 0]])
+            ((1, 1, [Vector3(0, 0)], 0), [[0]]),
+            ((2, 2, [Vector3(0, 0)], 0), [[0, 0], [0, 0]]),
+            ((3, 3, [Vector3(0, 0)], 0), [[0, 0, 0], [0, 0, 0], [0, 0, 0]]),
+            ((5, 3, [Vector3(0, 0)], 0), [[0, 0, 0, 0, 0], [0, 0, 0, 0, 0], [0, 0, 0, 0, 0]])
         ]:
             with self.subTest(values_in=values_in, values_out=values_out):
                 # Run tests
@@ -64,7 +64,7 @@ class TestTurn_score(unittest.TestCase):
 
         Expected: TypeError
         '''
-        arbitrator = Arbitrator(1, 1, Vector3(0, 0), 0)
+        arbitrator = Arbitrator(1, 1, [Vector3(0, 0)], 0)
         with self.assertRaises(TypeError):
             arbitrator.turn_score()
 
@@ -74,7 +74,7 @@ class TestTurn_score(unittest.TestCase):
 
         Expected: TypeError
         '''
-        arbitrator = Arbitrator(1, 1, Vector3(0, 0), 0)
+        arbitrator = Arbitrator(1, 1, [Vector3(0, 0)], 0)
         with self.assertRaises(TypeError):
             arbitrator.turn_score([], [], -2)
 

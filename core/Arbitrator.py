@@ -23,8 +23,17 @@ class Arbitrator:
             coverage_radius (int): The coverage radius of the balloons.
         '''
         self.score: int = 0
-        self.target_cells = target_cells
-        self.coverage_radius = coverage_radius
+        # Check if the target cells are valid
+        if all(isinstance(cell, Vector3) for cell in target_cells):
+            self.target_cells = target_cells
+        else:
+            raise TypeError("target_cells must be a list of Vector3 objects.")
+
+        # Check if the coverage radius is valid
+        if coverage_radius >= 0:
+            self.coverage_radius = coverage_radius
+        else:
+            raise ValueError(f"Invalid coverage radius: {coverage_radius}. Must be > 0.")
 
         # Initialize the coverage map
         if height > 0 and width > 0:
