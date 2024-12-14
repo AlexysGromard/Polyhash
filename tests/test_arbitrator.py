@@ -26,7 +26,7 @@ class TestArbitratorInit(unittest.TestCase):
         Expected: ValueError
         '''
         with self.assertRaises(ValueError):
-            Arbitrator(0, 0)
+            Arbitrator(0, 0, Vector3(0, 0), 0)
 
     def test_negative_grid_size(self):
         '''
@@ -35,7 +35,7 @@ class TestArbitratorInit(unittest.TestCase):
         Expected: ValueError
         '''
         with self.assertRaises(ValueError):
-            Arbitrator(-1, -1)
+            Arbitrator(-1, -1, Vector3(0, 0), 0)
 
     def test_valid_grid_size(self):
         '''
@@ -44,10 +44,10 @@ class TestArbitratorInit(unittest.TestCase):
         Expected: The coverage map is initialized correctly
         '''
         for values_in, values_out in [
-            ((1, 1), [[0]]),
-            ((2, 2), [[0, 0], [0, 0]]),
-            ((3, 3), [[0, 0, 0], [0, 0, 0], [0, 0, 0]]),
-            ((5, 3), [[0, 0, 0], [0, 0, 0], [0, 0, 0], [0, 0, 0], [0, 0, 0]])
+            ((1, 1, Vector3(0, 0), 0), [[0]]),
+            ((2, 2, Vector3(0, 0), 0), [[0, 0], [0, 0]]),
+            ((3, 3, Vector3(0, 0), 0), [[0, 0, 0], [0, 0, 0], [0, 0, 0]]),
+            ((5, 3, Vector3(0, 0), 0), [[0, 0, 0, 0, 0], [0, 0, 0, 0, 0], [0, 0, 0, 0, 0]])
         ]:
             with self.subTest(values_in=values_in, values_out=values_out):
                 # Run tests
@@ -64,7 +64,7 @@ class TestTurn_score(unittest.TestCase):
 
         Expected: TypeError
         '''
-        arbitrator = Arbitrator(1, 1)
+        arbitrator = Arbitrator(1, 1, Vector3(0, 0), 0)
         with self.assertRaises(TypeError):
             arbitrator.turn_score()
 
@@ -74,19 +74,9 @@ class TestTurn_score(unittest.TestCase):
 
         Expected: TypeError
         '''
-        arbitrator = Arbitrator(1, 1)
+        arbitrator = Arbitrator(1, 1, Vector3(0, 0), 0)
         with self.assertRaises(TypeError):
             arbitrator.turn_score([], [], -2)
-
-    def test_radius_negative(self):
-        '''
-        Test the case where the radius is negative
-
-        Expected: TypeError
-        '''
-        arbitrator = Arbitrator(1, 1)
-        with self.assertRaises(TypeError):
-            arbitrator.turn_score([Vector3(0, 0, 0)], [Vector3(0, 0, 0)], -2)
 
     def test_radius_1(self):
         '''
@@ -94,7 +84,6 @@ class TestTurn_score(unittest.TestCase):
 
         Expected: 4
         '''
-        arbitrator = Arbitrator(10, 10)
         ballons = [
             Vector3(2, 3),
             Vector3(8, 2),
@@ -109,8 +98,8 @@ class TestTurn_score(unittest.TestCase):
             Vector3(7, 6),
             Vector3(3, 8)
         ]
-        coverage_radius = 1
-        res = arbitrator.turn_score(ballons, targets, coverage_radius, False)
+        arbitrator = Arbitrator(10, 10, targets, 1) 
+        res = arbitrator.turn_score(ballons, False)
         self.assertEqual(res, 4)
 
     def test_radius_2(self):
@@ -119,7 +108,6 @@ class TestTurn_score(unittest.TestCase):
 
         Expected: 5
         '''
-        arbitrator = Arbitrator(10, 10)
         ballons = [
             Vector3(5, 5),
             Vector3(3, 8)
@@ -132,8 +120,8 @@ class TestTurn_score(unittest.TestCase):
             Vector3(5, 7),
             Vector3(2, 8)
         ]
-        coverage_radius = 2
-        res = arbitrator.turn_score(ballons, targets, coverage_radius, False)
+        arbitrator = Arbitrator(10, 10, targets, 2)
+        res = arbitrator.turn_score(ballons, False)
         self.assertEqual(res, 5)
     
     def test_subject(self):
@@ -142,7 +130,6 @@ class TestTurn_score(unittest.TestCase):
 
         Expected: 5
         '''
-        arbitrator = Arbitrator(3, 5)
         ballons_per_turn = [
             Vector3(1, 3),
             Vector3(0, 3),
@@ -154,12 +141,12 @@ class TestTurn_score(unittest.TestCase):
             Vector3(0, 2),
             Vector3(0, 4)
         ]
-        coverage_radius = 1
-        
+        arbitrator = Arbitrator(5, 3, targets, 1)
+
         # Run tests
         total_score = 0
         for i in range(5):
-            res = arbitrator.turn_score([ballons_per_turn[i]], targets, coverage_radius, False)
+            res = arbitrator.turn_score([ballons_per_turn[i]], False)
             total_score += res
 
         self.assertEqual(total_score, 5)
@@ -170,7 +157,6 @@ class TestTurn_score(unittest.TestCase):
 
         Expected: 2
         '''
-        arbitrator = Arbitrator(10, 10)
         ballons = [
             Vector3(4, 4),
             Vector3(4, 6),
@@ -179,10 +165,10 @@ class TestTurn_score(unittest.TestCase):
             Vector3(5, 4),
             Vector3(4, 5),
         ]
-        coverage_radius = 1
+        arbitrator = Arbitrator(10, 10, targets, 1)
 
         # Run tests
-        res = arbitrator.turn_score(ballons, targets, coverage_radius, False)
+        res = arbitrator.turn_score(ballons, False)
         self.assertEqual(res, 2)
 
     def test_two_ballons_on_same_target_coverage_2(self):
@@ -191,7 +177,6 @@ class TestTurn_score(unittest.TestCase):
 
         Expected: 3
         '''
-        arbitrator = Arbitrator(10, 10)
         ballons = [
             Vector3(4, 4),
             Vector3(4, 6),
@@ -201,8 +186,8 @@ class TestTurn_score(unittest.TestCase):
             Vector3(4, 5),
             Vector3(4, 6),
         ]
-        coverage_radius = 2
+        arbitrator = Arbitrator(10, 10, targets, 2)
 
         # Run tests
-        res = arbitrator.turn_score(ballons, targets, coverage_radius, False)
+        res = arbitrator.turn_score(ballons, False)
         self.assertEqual(res, 3)

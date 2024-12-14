@@ -9,16 +9,22 @@ class Arbitrator:
     Attributes:
         score (int): The score of the solution.
         coverage_map (list[list[int]]): The coverage map of the solution.
+        target_cells (list[Vector3]): The list of target cells.
+        coverage_radius (int): The coverage radius of the balloons.
     '''
-    def __init__(self, height: int, width: int):
+    def __init__(self, width: int, height: int, target_cells: list[Vector3], coverage_radius: int):
         '''
         The constructor for Arbitrator class.
 
         Args:
-            height (int): The height of the grid.
             width (int): The width of the grid.
+            height (int): The height of the grid.
+            target_cells (list[Vector3]): The list of target cells.
+            coverage_radius (int): The coverage radius of the balloons.
         '''
         self.score: int = 0
+        self.target_cells = target_cells
+        self.coverage_radius = coverage_radius
 
         # Initialize the coverage map
         if height > 0 and width > 0:
@@ -26,14 +32,12 @@ class Arbitrator:
         else:
             raise ValueError(f"Invalid grid size: height={height}, width={width}. Both must be > 0.")
 
-    def turn_score(self, balloons: list[Vector3], targets: list[Vector3], coverage_radius: int, debug: bool = False) -> int:
+    def turn_score(self, balloons: list[Vector3], debug: bool = False) -> int:
         '''
         The function to count the score of a solution for one turn.
 
         Args:
             balloons (list[vector]): The list of balloons. Vector3(x, y) where x is the row and y is the column.
-            targets (list[vector]): The list of targets. Vector3(x, y) where x is the row and y is the column.
-            coverage_radius (int) (optional): The coverage radius of the balloon.
             debug (bool) (optional): The flag to print debug information.
 
         Returns:
@@ -70,19 +74,19 @@ class Arbitrator:
             return (r - u) ** 2 + columndist(c, v, self.get_grid_size()[1]) ** 2 <= coverage_radius ** 2
 
         # Check if all arguments are provided correctly
-        if not balloons or not targets or coverage_radius < 0:
+        if not balloons or not self.target_cells or self.coverage_radius < 0:
             raise TypeError("Invalid arguments.")
 
         score = 0
 
         # Test for each target if it is covered by a balloon
-        for target in targets:
+        for target in self.target_cells:
             # Get radius
             u, v = target.x, target.y # Target coordinates
             for balloon in balloons:
                 r, c = balloon.x, balloon.y # Balloon coordinates
                 # Check if the target is covered by the balloon
-                if is_covered(r, c, u, v, coverage_radius):
+                if is_covered(r, c, u, v, self.coverage_radius):
                     if debug:
                         print(f"Balloon at ({r}, {c}) covers target at ({u}, {v})")
                     score += 1
