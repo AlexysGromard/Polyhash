@@ -53,6 +53,41 @@ class TestArbitratorInit(unittest.TestCase):
                 # Run tests
                 arbitrator = Arbitrator(*values_in)
                 self.assertEqual(arbitrator.get_coverage_map(), values_out)
+    
+    def test_invalid_target_cells(self):
+        '''
+        Test the case where the target cells are invalid
+
+        Expected: TypeError
+        '''
+        with self.assertRaises(TypeError):
+            Arbitrator(1, 1, [0], 0)
+
+    def test_negative_coverage_radius(self):
+        '''
+        Test the case where the coverage radius is negative
+
+        Expected: ValueError
+        '''
+        with self.assertRaises(ValueError):
+            Arbitrator(1, 1, [Vector3(0, 0)], -1)
+        
+    def test_valid_coverage_radius(self):
+        '''
+        Test the case where the coverage radius is valid
+
+        Expected: The coverage radius is initialized correctly
+        '''
+        for values_in, values_out in [
+            ((1, 1, [Vector3(0, 0)], 0), 0),
+            ((1, 1, [Vector3(0, 0)], 1), 1),
+            ((1, 1, [Vector3(0, 0)], 2), 2),
+            ((1, 1, [Vector3(0, 0)], 3), 3)
+        ]:
+            with self.subTest(values_in=values_in, values_out=values_out):
+                # Run tests
+                arbitrator = Arbitrator(*values_in)
+                self.assertEqual(arbitrator.coverage_radius, values_out)
 
 class TestTurn_score(unittest.TestCase):
     '''
