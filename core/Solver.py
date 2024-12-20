@@ -7,6 +7,7 @@ from .algorithms import Algorithm
 from .models import DataModel, Vector3, OutputModel
 from .Arbitrator import Arbitrator
 
+from .utils import DebugPrinter
 
 
 
@@ -70,6 +71,7 @@ class Solver:
         self.output         :str                = output
         
         self.display        :bool               = display
+        DebugPrinter.set_display(display)
         
         self.trajectories   :list[list]         = []
         
@@ -85,18 +87,12 @@ class Solver:
         """
         self.trajectories = self.algorithm.compute(self.datamodel)
         
-        
+        # Affichage 
+        DebugPrinter.debug(
+            DebugPrinter.header("Solver", "run", DebugPrinter.STATES["run"]),
+            DebugPrinter.variable("trajectories", "list[list[int]]", self.trajectories, additional_info={"length": len(self.trajectories)})
+        )
 
-        self.trajectories = [
-                    [1, 1], [0, 1], [-1, 0], [0, 0], [1, -1], [-1, 1], [0, -1], [1, 0], 
-                    [-1, -1], [0, 1], [1, -1], [-1, 1], [0, 0], [1, -1], [-1, 0], [0, 1], 
-                    [1, 1], [0, -1], [1, 0], [-1, 0]
-                ]
-
-        
-        print(f"Trajectories : {self.trajectories}")
-        print(f"Trajectories : {len(self.trajectories)}")
-        print("Post Process")
         return 
     
     
@@ -112,15 +108,24 @@ class Solver:
         
         """
 
-        
-        
         # Créer un arbitrateur
         abitrator = Arbitrator(self.datamodel.cols, self.datamodel.rows)
         
         
         # Créer une liste de ballons avec les positions initiales
-        print(f"Starting Cell : {self.datamodel.starting_cell}")
+        
         balloons = [self.datamodel.starting_cell.copy() for _ in range(self.datamodel.num_balloons)] 
+        
+
+        DebugPrinter.debug(
+            DebugPrinter.header("Solver", "post_process", DebugPrinter.STATES["run"]),
+            DebugPrinter.message("Starting post_process", color="yellow"),
+            DebugPrinter.variable("abitrator", "Arbitrator", abitrator),
+            DebugPrinter.variable("balloons", "list[Vector3]", balloons, additional_info={"length": len(balloons)})
+        )
+
+            
+        
         
         # Pour chaque tour, on déplace les ballons et on calcule le score
         for turn in range(self.datamodel.turns):
@@ -132,7 +137,7 @@ class Solver:
                 print(f"avant - balloon {i} : {balloons[i]}")
                 balloons[i].z += self.trajectories[turn][i]
                 print(f"mid - balloon {i}  z + {self.trajectories[turn][i]} - {self.trajectories[turn]} - {turn}"  )
-                balloons[i], is_in = self.datamodel.nextPlaceBalloon(balloons[i])
+                balloons[i], is_in = self.datamodel.updatePositionWithWind(balloons[i])
                 print(f"after - balloon {i} : {balloons[i]} - is_in : {is_in}")
                 if not is_in:
                     raise ValueError(f"Sort de la grille")
@@ -140,12 +145,15 @@ class Solver:
             # calculer le score
             res  = abitrator.turn_score(balloons, self.datamodel.target_cells, self.datamodel.coverage_radius)
             
-            if self.display:
-                print(f"-----------------{turn}-----------------")
-                print(f"Turn {turn} - balloon      : {balloons}")
-                print(f"Turn {turn} - trajectories : {self.trajectories[turn]}")
-                print(f"Turn {turn} - score        : {abitrator.score}")
-                print(f"Turn {turn} - turn score   : {res}")
+            DebugPrinter.debug(
+                DebugPrinter.header("Solver", "post_process", DebugPrinter.STATES["run"]),
+                DebugPrinter.message(f"LOOP turn = {turn}", color="yellow"),
+                DebugPrinter.variable("balloons", "list[Vector3]", balloons, additional_info={"length": len(balloons)}),
+                DebugPrinter.variable("res", "int", res)
+                      
+            )             
+
+                      
             
         
         # Exporter les résultats dans le fichier de sortie
