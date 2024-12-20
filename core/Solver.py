@@ -57,7 +57,7 @@ class Solver:
             raise ValueError(f"Invalid display value: {display}")
         
         # verifier si l'algorithme est valide
-        if type(algo) is not str:
+        if type(algo) is not str and algo != None:
             raise ValueError(f"Invalid algorithm value: {algo}")
         
         
@@ -86,15 +86,13 @@ class Solver:
         self.trajectories = self.algorithm.compute(self.datamodel)
         
         
-        print(f"Data Model : ")
-        print(f"Rows : {self.datamodel.rows}")
-        print(f"Cols : {self.datamodel.cols}")
-        print(f"Altitudes : {self.datamodel.altitudes}")
-        print(f"Num Targets : {self.datamodel.num_targets}")
-        print(f"Coverage Radius : {self.datamodel.coverage_radius}")
-        print(f"Num Balloons : {self.datamodel.num_balloons}")
-        print(f"Turns : {self.datamodel.turns}")
-        
+
+        self.trajectories = [
+                    [1, 1], [0, 1], [-1, 0], [0, 0], [1, -1], [-1, 1], [0, -1], [1, 0], 
+                    [-1, -1], [0, 1], [1, -1], [-1, 1], [0, 0], [1, -1], [-1, 0], [0, 1], 
+                    [1, 1], [0, -1], [1, 0], [-1, 0]
+                ]
+
         
         print(f"Trajectories : {self.trajectories}")
         print(f"Trajectories : {len(self.trajectories)}")
@@ -113,50 +111,7 @@ class Solver:
             File: Fichier de sortie avec les résultats de la résolution
         
         """
-        
-        def move_balloon(balloon, altitude) -> 'Vector3':
-            # TODO: a voir si l'abitre va calculer le deplacement des ballons via les ordre donner par les trajectoires
-            """Provisoire
 
-            Args:
-                balloon (Vector3): Position du ballon
-                altitude (int): Altitude a ajouter
-
-            Raises:
-                ValueError: Sort de la grille
-
-            Returns:
-                Vector3: Nouvelle position du ballon
-            """
-            
-            
-            # calculer la nouvelle position du ballon avec l'altitude
-            balloon.z += altitude
-            
-            
-             #Check si l'altitude est correcte
-            if balloon.z > self.datamodel.altitudes:
-                return False
-            
-            
-            #Changement de position
-            wind = self.datamodel.wind_grids[balloon.z - 1][balloon.x][balloon.y]
-            new_balloon = Vector3(
-                balloon.x +wind.x,
-                balloon.y +wind.y,
-                balloon.z +wind.z,
-            )
-            new_balloon.y = new_balloon.y % self.datamodel.cols
-
-            #Check si le ballon ne sort pas en haut / en bas
-            
-            if new_balloon.x < 0 or new_balloon.x >= self.datamodel.rows:
-            
-                raise ValueError(f"")
-            
-            
-            return new_balloon
-        
         
         
         # Créer un arbitrateur
@@ -164,13 +119,23 @@ class Solver:
         
         
         # Créer une liste de ballons avec les positions initiales
-        balloons = [self.datamodel.starting_cell for i in range(self.datamodel.num_balloons)] 
+        print(f"Starting Cell : {self.datamodel.starting_cell}")
+        balloons = [self.datamodel.starting_cell.copy() for _ in range(self.datamodel.num_balloons)] 
         
         # Pour chaque tour, on déplace les ballons et on calcule le score
         for turn in range(self.datamodel.turns):
             
-            # déplacer les ballons #TODO: Check qu'il n'y a pas d'erreur du changement de position
-            balloons = [move_balloon(balloon, self.trajectories[turn][i]) for i, balloon in enumerate(balloons)]
+
+            # déplacer les ballons 
+            for i in range(self.datamodel.num_balloons):
+                print(f"-----------------\\\\\-----------------")
+                print(f"avant - balloon {i} : {balloons[i]}")
+                balloons[i].z += self.trajectories[turn][i]
+                print(f"mid - balloon {i}  z + {self.trajectories[turn][i]} - {self.trajectories[turn]} - {turn}"  )
+                balloons[i], is_in = self.datamodel.nextPlaceBalloon(balloons[i])
+                print(f"after - balloon {i} : {balloons[i]} - is_in : {is_in}")
+                if not is_in:
+                    raise ValueError(f"Sort de la grille")
             
             # calculer le score
             res  = abitrator.turn_score(balloons, self.datamodel.target_cells, self.datamodel.coverage_radius)
@@ -188,4 +153,6 @@ class Solver:
         output.export_output_file(self.output)
         
         return
+
+    
     

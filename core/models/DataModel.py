@@ -34,6 +34,8 @@ class DataModel:
     starting_cell: Vector3
     target_cells: list[Vector3] 
     wind_grids: list[List[list[Vector3]]] 
+    
+
 
     @classmethod
     def extract_data(cls, file_path: str) -> "DataModel":
@@ -110,3 +112,44 @@ class DataModel:
 
         except Exception as e:
             raise ValueError(f"Error reading file: {e}")
+
+
+
+
+    def nextPlaceBalloon(self, balloon: 'Vector3') -> tuple[Vector3,bool] :
+            """Compute the new position of the balloon after the wind.
+
+            Args:
+                d (DataModel): DataModel in order to get the winds.
+                place (Vector3): Actual position of the balloon (Z coord. matter)
+
+            Returns:
+                tuple[Vector3,bool]: Return the new position of the balloon OR false if the balloon quit
+            """
+
+
+            #Check si l'altitude est correcte
+            if balloon.z  > self.altitudes or balloon.z < 0:
+                return (balloon, False)
+            elif balloon.z == 0:
+                return (balloon, True)
+            else :
+                #Changement de position
+                wind = self.wind_grids[balloon.z - 1][balloon.x][balloon.y]
+                
+                balloon.x += wind.x
+                balloon.y += wind.y
+
+
+                balloon.y = balloon.y % self.cols
+
+                #Check si le ballon ne sort pas en haut / en bas
+
+                if balloon.x < 0 or balloon.x >= self.rows:
+                    # remmetre le ballon a la position precedente
+                    balloon.x -= wind.x
+                    balloon.y -= wind.y
+
+                    return (balloon, False)
+
+                return (balloon, True)
