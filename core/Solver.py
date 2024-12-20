@@ -71,7 +71,7 @@ class Solver:
         self.output         :str                = output
         
         self.display        :bool               = display
-        DebugPrinter.set_display(display)
+
         
         self.trajectories   :list[list]         = []
         
