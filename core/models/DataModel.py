@@ -24,18 +24,16 @@ class DataModel:
         extract_data: Extracts the data from the challenge file and returns a DataModel object.
     """
 
-    rows: int 
-    cols: int 
-    altitudes: int 
-    num_targets: int 
-    coverage_radius: int
-    num_balloons: int 
-    turns: int
-    starting_cell: Vector3
-    target_cells: list[Vector3] 
-    wind_grids: list[List[list[Vector3]]] 
-    
-
+    rows: int = None
+    cols: int = None
+    altitudes: int = None
+    num_targets: int = None
+    coverage_radius: int = None
+    num_balloons: int = None
+    turns: int = None
+    starting_cell: Vector3 = None
+    target_cells: list[Vector3] = None
+    wind_grids: list[List[list[Vector3]]] = None 
 
     @classmethod
     def extract_data(cls, file_path: str) -> "DataModel":
