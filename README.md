@@ -10,9 +10,25 @@ A terme, l'objectif est de réaliser le meilleur score possible. Pour cela, il e
 
 Description du fonctionnement du projet, notamment comment le lancer (paramètres, etc).
 
+### Commande Minimale
 La syntaxe générale/minimale est
 
-    polyhash.py ./challenges/challenge.in ./output/sortie.txt
+```sh
+polyhash.py ./challenges/challenge.in ./output/sortie.txt
+```	
+
+### Commande Complète
+La syntaxe complète est
+
+```sh
+polyhash.py ./challenges/challenge.in ./output/sortie.txt -display True -algo algo1
+```
+
+**Paramètres** :
+- **./challenges/challenge.in** (string):   Fichier d'entrée
+- **./output/sortie.txt** (string):         Fichier de sortie
+- **-display** (bool):                    Permet d'afficher les graphiques de la simulation
+- **-algo** (string):                       Permet de choisir l'algorithme à utiliser (algo1, algo2, algo3)
 
 # L'équipe
 

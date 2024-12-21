@@ -110,3 +110,44 @@ class DataModel:
 
         except Exception as e:
             raise ValueError(f"Error reading file: {e}")
+
+
+
+
+    def updatePositionWithWind(self, position: 'Vector3') -> tuple[Vector3,bool] :
+            """Compute the new position of the position after the wind.
+
+            Args:
+                d (DataModel): DataModel in order to get the winds.
+                place (Vector3): Actual position of the position (Z coord. matter)
+
+            Returns:
+                tuple[Vector3,bool]: Return the new position of the position OR false if the position quit
+            """
+
+
+            #Check si l'altitude est correcte
+            if position.z  > self.altitudes or position.z < 0:
+                return (position, False)
+            elif position.z == 0:
+                return (position, True)
+            else :
+                #Changement de position
+                wind = self.wind_grids[position.z - 1][position.x][position.y]
+
+                position.x += wind.x
+                position.y += wind.y
+
+
+                position.y = position.y % self.cols
+
+                #Check si le ballon ne sort pas en haut / en bas
+
+                if position.x < 0 or position.x >= self.rows:
+                    # remmetre le ballon a la position precedente
+                    position.x -= wind.x
+                    position.y -= wind.y
+
+                    return (position, False)
+
+                return (position, True)

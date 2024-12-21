@@ -21,6 +21,19 @@ class Vector3:
     y: int = 0
     z: int = 0
 
+    def __post_init__(self):
+        """
+        Initializes the Vector3 object and checks if the attributes are of the correct type.
+
+        Raises:
+            TypeError: _description_
+        """
+        for attr_name in ['x', 'y', 'z']:
+            value = getattr(self, attr_name) # get the value of the attribute
+            if not isinstance(value, (int)): # check if the value is an int or float"
+                raise TypeError(f"{attr_name} must be an int or float, got {type(value).__name__}")
+
+
     def __add__(self, other: "Vector3") -> "Vector3":
         """
         Adds two Vector3 objects.
@@ -65,3 +78,14 @@ class Vector3:
         if isinstance(other, Vector3):
             return self.x == other.x and self.y == other.y and self.z == other.z
         return NotImplemented
+    
+    def copy(self) -> "Vector3":
+        """
+        Returns a copy of the Vector3 object.
+
+        Returns:
+            Vector3: A copy of the Vector3 object.
+        """
+        return Vector3(self.x, self.y, self.z)
+    
+    
