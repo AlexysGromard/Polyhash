@@ -109,7 +109,7 @@ class Solver:
         """
 
         # Créer un arbitrateur
-        abitrator = Arbitrator(self.datamodel.cols, self.datamodel.rows)
+        abitrator = Arbitrator(self.datamodel)
         
         
         # Créer une liste de ballons avec les positions initiales
@@ -145,7 +145,7 @@ class Solver:
                     raise ValueError(f"Sort de la grille")
             
             # calculer le score
-            res  = abitrator.turn_score(balloons, self.datamodel.target_cells, self.datamodel.coverage_radius)
+            res  = abitrator.turn_score(balloons)
             
             DebugPrinter.debug(
                 DebugPrinter.header("Solver", "post_process", DebugPrinter.STATES["run"]),
