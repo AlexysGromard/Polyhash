@@ -1,7 +1,7 @@
 
 from abc import ABC, abstractmethod
 from typing import Any
-from core.models import DataModel
+from ...models import DataModel
 
 class Display(ABC):
     """
