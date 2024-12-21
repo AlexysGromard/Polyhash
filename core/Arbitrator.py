@@ -93,6 +93,9 @@ class Arbitrator:
             # Get radius
             u, v = target.x, target.y # Target coordinates
             for balloon in balloons:
+                # Check if the balloon altitude is not 0
+                if balloon.z == 0:
+                    break
                 r, c = balloon.x, balloon.y # Balloon coordinates
                 # Check if the target is covered by the balloon
                 if is_covered(r, c, u, v, self.coverage_radius):

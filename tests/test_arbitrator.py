@@ -112,6 +112,8 @@ class TestTurn_score(unittest.TestCase):
         Expected: TypeError
         '''
         arbitrator = Arbitrator(DataModel(rows=1, cols=1, coverage_radius=0, target_cells=[Vector3(0, 0)]))
+
+        
         with self.assertRaises(TypeError):
             arbitrator.turn_score([])
 
@@ -122,9 +124,9 @@ class TestTurn_score(unittest.TestCase):
         Expected: 4
         '''
         ballons = [
-            Vector3(2, 3),
-            Vector3(8, 2),
-            Vector3(5, 5)
+            Vector3(2, 3, 1),
+            Vector3(8, 2, 1),
+            Vector3(5, 5, 1)
         ]
         targets = [
             Vector3(2, 2),
@@ -136,6 +138,8 @@ class TestTurn_score(unittest.TestCase):
             Vector3(3, 8)
         ]
         arbitrator = Arbitrator(DataModel(rows=10, cols=10, coverage_radius=1, target_cells=targets)) 
+
+        # Run test
         res = arbitrator.turn_score(ballons)
         self.assertEqual(res, 4)
 
@@ -146,8 +150,8 @@ class TestTurn_score(unittest.TestCase):
         Expected: 5
         '''
         ballons = [
-            Vector3(5, 5),
-            Vector3(3, 8)
+            Vector3(5, 5, 1),
+            Vector3(3, 8, 1)
         ]
         targets = [
             Vector3(3, 0),
@@ -158,6 +162,8 @@ class TestTurn_score(unittest.TestCase):
             Vector3(2, 8)
         ]
         arbitrator = Arbitrator(DataModel(rows=10, cols=10, coverage_radius=2, target_cells=targets))
+
+        # Run test
         res = arbitrator.turn_score(ballons, False)
         self.assertEqual(res, 5)
     
@@ -168,11 +174,11 @@ class TestTurn_score(unittest.TestCase):
         Expected: 5
         '''
         ballons_per_turn = [
-            Vector3(1, 3),
-            Vector3(0, 3),
-            Vector3(0, 0),
-            Vector3(0, 1),
-            Vector3(0, 2)
+            Vector3(1, 3, 1),
+            Vector3(0, 3, 1),
+            Vector3(0, 0, 1),
+            Vector3(0, 1, 1),
+            Vector3(0, 2, 1)
         ]
         targets = [
             Vector3(0, 2),
@@ -195,8 +201,8 @@ class TestTurn_score(unittest.TestCase):
         Expected: 2
         '''
         ballons = [
-            Vector3(4, 4),
-            Vector3(4, 6),
+            Vector3(4, 4, 1),
+            Vector3(4, 6, 1),
         ]
         targets = [
             Vector3(5, 4),
@@ -204,7 +210,7 @@ class TestTurn_score(unittest.TestCase):
         ]
         arbitrator = Arbitrator(DataModel(rows=10, cols=10, coverage_radius=1, target_cells=targets))
 
-        # Run tests
+        # Run test
         res = arbitrator.turn_score(ballons)
         self.assertEqual(res, 2)
 
@@ -215,8 +221,8 @@ class TestTurn_score(unittest.TestCase):
         Expected: 3
         '''
         ballons = [
-            Vector3(4, 4),
-            Vector3(4, 6),
+            Vector3(4, 4, 1),
+            Vector3(4, 6, 1),
         ]
         targets = [
             Vector3(3, 5),
@@ -225,6 +231,28 @@ class TestTurn_score(unittest.TestCase):
         ]
         arbitrator = Arbitrator(DataModel(rows=10, cols=10, coverage_radius=2, target_cells=targets))
 
-        # Run tests
+        # Run test
         res = arbitrator.turn_score(ballons)
         self.assertEqual(res, 3)
+
+    def test_ballons_not_launched(self):
+        '''
+        Test the case where the ballons are not launched
+
+        Expected: 0
+        '''
+        ballons = [
+            Vector3(4, 4, 0),
+            Vector3(4, 6, 0),
+        ]
+        targets = [
+            Vector3(3, 5),
+            Vector3(4, 5),
+            Vector3(4, 6),
+        ]
+        arbitrator = Arbitrator(DataModel(rows=10, cols=10, coverage_radius=2, target_cells=targets))
+
+        # Run test
+        res = arbitrator.turn_score(ballons)
+        self.assertEqual(res, 0)
+    

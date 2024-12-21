@@ -24,28 +24,16 @@ class DataModel:
         extract_data: Extracts the data from the challenge file and returns a DataModel object.
     """
 
-    def __init__(self, rows: int = 0, cols: int = 0, altitudes: int = 0, num_targets: int = 0, coverage_radius: int = 0, num_balloons: int = 0, turns: int = 0, starting_cell: Vector3 = None, target_cells: list[Vector3] = None, wind_grids: list[List[list[Vector3]]] = None):
-        self.rows = rows
-        self.cols = cols
-        self.altitudes = altitudes
-        self.num_targets = num_targets
-        self.coverage_radius = coverage_radius
-        self.num_balloons = num_balloons
-        self.turns = turns
-        self.starting_cell = starting_cell if starting_cell is not None else Vector3(0, 0, 0)
-        self.target_cells = target_cells if target_cells is not None else []
-        self.wind_grids = wind_grids if wind_grids is not None else []
-
-    rows: int
-    cols: int 
-    altitudes: int 
-    num_targets: int 
-    coverage_radius: int
-    num_balloons: int 
-    turns: int
-    starting_cell: Vector3
-    target_cells: list[Vector3] 
-    wind_grids: list[List[list[Vector3]]] 
+    rows: int = None
+    cols: int = None
+    altitudes: int = None
+    num_targets: int = None
+    coverage_radius: int = None
+    num_balloons: int = None
+    turns: int = None
+    starting_cell: Vector3 = None
+    target_cells: list[Vector3] = None
+    wind_grids: list[List[list[Vector3]]] = None 
 
     @classmethod
     def extract_data(cls, file_path: str) -> "DataModel":
