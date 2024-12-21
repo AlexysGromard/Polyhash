@@ -133,12 +133,14 @@ class Solver:
 
             # déplacer les ballons 
             for i in range(self.datamodel.num_balloons):
-                print(f"-----------------\\\\\-----------------")
-                print(f"avant - balloon {i} : {balloons[i]}")
+
+                # déplacer le ballon sur l'altitude
                 balloons[i].z += self.trajectories[turn][i]
-                print(f"mid - balloon {i}  z + {self.trajectories[turn][i]} - {self.trajectories[turn]} - {turn}"  )
+
+                # deplacer le ballon
                 balloons[i], is_in = self.datamodel.updatePositionWithWind(balloons[i])
-                print(f"after - balloon {i} : {balloons[i]} - is_in : {is_in}")
+                
+                # si le updatePositionWithWind est False alors lancer une erreur et arrete le programme
                 if not is_in:
                     raise ValueError(f"Sort de la grille")
             
@@ -149,8 +151,7 @@ class Solver:
                 DebugPrinter.header("Solver", "post_process", DebugPrinter.STATES["run"]),
                 DebugPrinter.message(f"LOOP turn = {turn}", color="yellow"),
                 DebugPrinter.variable("balloons", "list[Vector3]", balloons, additional_info={"length": len(balloons)}),
-                DebugPrinter.variable("res", "int", res)
-                      
+                DebugPrinter.variable("res", "int", res)     
             )             
 
                       
@@ -161,6 +162,3 @@ class Solver:
         output.export_output_file(self.output)
         
         return
-
-    
-    
