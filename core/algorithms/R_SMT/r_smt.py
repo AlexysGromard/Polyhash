@@ -1,6 +1,6 @@
 import random
 from core.models import DataModel,Vector3
-from testMRArbitre import ArbitatorMR
+
 class RSMT:
     def compute(self, data: 'DataModel'):
         self.d = data
