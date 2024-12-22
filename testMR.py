@@ -1,16 +1,14 @@
 from core.models import *
-from core.algorithms.R_SMT.r_smt import *
-from core.algorithms.R_SMT.r_smt_v2 import *
-from time import *
-from testMR_Arb_opti import *
-import multiprocessing
-d = DataModel.extract_data("challenges/c_medium.in")
+from core.models.OutputModel import *
+from core.algorithms.Mathis.algoMathis import *
+from core.algorithms.Recursivo.Recursivo import *
 
 
-arb = Arbitrator(d)
-startTime = time()
-#result = a.compute(d)
-endTime = time()
+d = DataModel.extract_data("challenges/b_small.in")
+a = Arbitrator(d.rows, d.cols)
+algo = Recursivo()
+from testMRArbitre import *
+a = ArbitatorMR(d)
 
 #Calcul du score:
 def get_best(tours):
@@ -21,10 +19,15 @@ def get_best(tours):
     for _ in range(tours):
         score = 0
         result = algo.compute(d)
-       
-        score = result[3]
-    
-       
+        print(result)
+        places = [Vector3(d.starting_cell.x, d.starting_cell.y, 0) for i in range(d.num_balloons)]
+        
+        for turn in result["path"]:
+            for i in range(len(places)):
+                places[i].z += turn[i]
+                places[i] = algo.nextPlace(d,places[i])
+            score += a.turnScore(places)
+
         min_score = min(min_score, score)
         if score > best_score:
             best_score = score
@@ -35,20 +38,19 @@ def get_best(tours):
     #print(best_result)
     return [best_score, min_score, best_result]
 
+print(get_best(1))
+""" 
 if __name__ == "__main__":
-    with multiprocessing.Pool(4) as pool:
-        n = 1
-        results = pool.map(get_best, [n for i in range(4)])
+    with multiprocessing.Pool(8) as pool:
+        results = pool.map(get_best, [1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000])
     min = 0
     path = None
     for r in results:
         print(f"best: {r[0]}, min: {r[1]}")
         if r[0] > min:
             min = r[0]
-            path = r[2] 
-    
+            path = r[2]
     print(f"best: {min}")
-   
-    o = OutputModel(0, 0, path)
-    o.export_output_file("test.txt")
-
+    o = OutputModel(d.turns, d.num_balloons, path)
+    o.export_output_file('test.txt')
+ """
