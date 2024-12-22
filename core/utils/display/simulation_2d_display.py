@@ -12,7 +12,7 @@ class Simulation2DDisplay(Display):
         balloon_positions (List[List[Vector3]]): Precomputed positions of balloons for each turn.
     """
 
-    def __init__(self, data_model: DataModel, balloon_positions: list[list[Vector3]]):
+    def __init__(self, data_model: DataModel, balloon_positions: list[list[Vector3]], score_history: list[int]) -> None:
         """
         Initializes the Simulation2DDisplay.
 
@@ -22,6 +22,7 @@ class Simulation2DDisplay(Display):
         """
         super().__init__(data_model)
         self.balloon_positions = balloon_positions
+        self.score_history = score_history
 
     def render(self) -> None:
         """
@@ -36,8 +37,8 @@ class Simulation2DDisplay(Display):
 
         # Add targets as scatter points with persistent display
         targets_trace = go.Scatter(
-            x=[target[0] for target in target_cells],
-            y=[target[1] for target in target_cells],
+            x=[target[1] for target in target_cells],
+            y=[target[0] for target in target_cells],
             mode='markers',
             marker=dict(color='orange', size=10, symbol='x'),
             name='Targets',
@@ -81,8 +82,8 @@ class Simulation2DDisplay(Display):
             for i, balloon in enumerate(current_positions):
                 # Add balloon position
                 balloon_trace = go.Scatter(
-                    x=[balloon.x],
-                    y=[balloon.y],
+                    x=[balloon.y],
+                    y=[balloon.x],
                     mode='markers',
                     marker=dict(size=12, color='red')
                 )
@@ -91,8 +92,8 @@ class Simulation2DDisplay(Display):
                 # Add coverage circle
                 radius = self.data_model.coverage_radius
                 theta = [2 * math.pi * t / 100 for t in range(100)]  # Generate 100 points
-                coverage_x = [balloon.x + radius * math.cos(angle) for angle in theta]
-                coverage_y = [balloon.y + radius * math.sin(angle) for angle in theta]
+                coverage_x = [balloon.y + radius * math.cos(angle) for angle in theta]
+                coverage_y = [balloon.x + radius * math.sin(angle) for angle in theta]
                 coverage_trace = go.Scatter(
                     x=coverage_x,
                     y=coverage_y,
@@ -105,8 +106,48 @@ class Simulation2DDisplay(Display):
             # Append the frame
             frames.append(go.Frame(data=frame_data, name=str(turn)))
 
+        # Create annotation for the score
+            score_annotation = go.layout.Annotation(
+                text=f"Score: {self.score_history[turn]}",
+                xref="paper",
+                yref="paper",
+                x=0.02,  # Position in the top-left corner
+                y=0.98,
+                showarrow=False,
+                font=dict(size=16, color="black"),
+                bgcolor="white",
+                bordercolor="black",
+                borderwidth=1
+            )
+
+            # Append the frame with the updated annotation
+            frames.append(go.Frame(
+                data=frame_data,
+                name=str(turn),
+                layout=go.Layout(annotations=[score_annotation])
+            ))
+
         # Add frames to the figure
         fig.frames = frames
+
+        # Add initial score annotation
+        fig.update_layout(
+            annotations=[
+                go.layout.Annotation(
+                    text=f"Score: {self.score_history[0]}",
+                    xref="paper",
+                    yref="paper",
+                    x=0.02,
+                    y=0.98,
+                    showarrow=False,
+                    font=dict(size=16, color="black"),
+                    bgcolor="white",
+                    bordercolor="black",
+                    borderwidth=1
+                )
+            ]
+        )
+
 
         # Configure layout and animation controls
         fig.update_layout(
@@ -135,23 +176,20 @@ class Simulation2DDisplay(Display):
                 active=0
             )],
             xaxis=dict(
-                range=[-0.5, self.data_model.cols - 0.5],  # Adjust range to show full grid cells
-                title="X Coordinate",
+                range=[-0.5, self.data_model.cols + 0.5],  # Adjust range to show full grid cells
+                title="Cols",
                 showgrid=True,
-                dtick=1,  # Show grid lines for each coordinate
-                scaleanchor="y"  # Locking X axis scale to Y for uniformity
+                dtick=1
             ),
             yaxis=dict(
-                range=[self.data_model.rows - 0.5, -0.5],  # Invert Y to match typical grid coordinates
-                title="Y Coordinate", 
+                range=[0, self.data_model.rows + 0.5], 
+                title="Rows", 
                 showgrid=True,
                 dtick=1  # Show grid lines for each coordinate
             ),
             title="Simulation 2D Display",
             showlegend=True,
-            width=800,  # Wider display
-            height=800,  # Square display
-            plot_bgcolor='white',  # White background
+            #plot_bgcolor='white',  # White background
         )
 
         # Show the figure
