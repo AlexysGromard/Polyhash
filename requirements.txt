@@ -1,2 +1,6 @@
 # Ce fichier contient les modules pip requis par le projet
 ruff
+plotly
+matplotlib
+numpy
+pandas

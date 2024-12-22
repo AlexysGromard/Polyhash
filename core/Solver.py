@@ -1,6 +1,8 @@
 # IMPORT
 import os
+import copy
 from pathlib import Path
+
 
 # import local
 from .algorithms import Algorithm
@@ -8,6 +10,7 @@ from .models import DataModel, Vector3, OutputModel
 from .Arbitrator import Arbitrator
 
 from .utils import DebugPrinter
+from .utils.display import Display, Simulation2DDisplay
 
 
 
@@ -27,7 +30,7 @@ class Solver:
     """
     
     
-    def __init__(self, path :str, output :str, display :bool = False, algo :str = None) -> None:
+    def __init__(self, path :str, output :str, display :bool = False, displays :list[str] = None, algo :str = None) -> None:
         """
         Constructeur de la classe Solver
 
@@ -35,12 +38,14 @@ class Solver:
             path (str): Chemin du fichier d'entrée des données
             output (str): Chemin du fichier de sortie des données
             display (bool, optional): active ou désactive l'affichage. Defaults to False.
+            displays (list[str], optional): Liste des noms des displays à utiliser. Defaults to None.
             algo (str, optional): Algorithme à utiliser. Defaults to None.
 
         Raises:
             ValueError: Le chemin d'entrée n'est pas valide
             ValueError: Output directory does not exist
             ValueError: Invalid display value
+            ValueError: Invalid displays value
             ValueError: Invalid algorithm value
         """
         
@@ -57,6 +62,14 @@ class Solver:
         if type(display) is not bool:
             raise ValueError(f"Invalid display value: {display}")
         
+        # Vérifier que le displays est une liste
+        if type(displays) is not list:
+            raise ValueError(f"Invalid displays value: {displays}")
+        if len(displays) != 0:
+            for display in displays:
+                if type(display) is not str:
+                    raise ValueError(f"Invalid display value: {display}")
+        
         # verifier si l'algorithme est valide
         if type(algo) is not str and algo != None:
             raise ValueError(f"Invalid algorithm value: {algo}")
@@ -71,8 +84,8 @@ class Solver:
         self.output         :str                = output
         
         self.display        :bool               = display
+        self.displays       :list[str]          = displays
 
-        
         self.trajectories   :list[list]         = []
         
         self.datamodel      :'DataModel'        = DataModel.extract_data(self.path)
@@ -125,7 +138,8 @@ class Solver:
         )
 
             
-        
+        turn_history = []
+        score_history = []
         
         # Pour chaque tour, on déplace les ballons et on calcule le score
         for turn in range(self.datamodel.turns):
@@ -143,16 +157,37 @@ class Solver:
                 # si le updatePositionWithWind est False alors lancer une erreur et arrete le programme
                 if not is_in:
                     raise ValueError(f"Sort de la grille")
+                
+                # on ajoute le turn à l'historique
+                turn_history.append(copy.deepcopy(balloons))
             
             # calculer le score
             res  = abitrator.turn_score(balloons)
+            score_history.append(res)
             
             DebugPrinter.debug(
                 DebugPrinter.header("Solver", "post_process", DebugPrinter.STATES["run"]),
                 DebugPrinter.message(f"LOOP turn = {turn}", color="yellow"),
                 DebugPrinter.variable("balloons", "list[Vector3]", balloons, additional_info={"length": len(balloons)}),
                 DebugPrinter.variable("res", "int", res)     
-            )             
+            )         
+            
+        # Affichage
+        if self.display:
+            for display_name in self.displays:
+                try:
+                    match display_name:
+                        case "simulation_2d":
+                            print("display")
+                            display = Display.register_display(display_name, Simulation2DDisplay)
+                            display = Display.create_display(display_name, self.datamodel, turn_history, score_history)
+                        case _:
+                            DebugPrinter.debug(DebugPrinter.message(f"Unknown display type '{display_name}'", color="red"))
+                            continue
+
+                    display.render()
+                except Exception as e:
+                    DebugPrinter.message(f"Error while rendering display '{display_name}': {e}", color="red")
 
                       
             
