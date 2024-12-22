@@ -137,10 +137,7 @@ class DataModel:
                 wind = self.wind_grids[position.z - 1][position.x][position.y]
 
                 position.x += wind.x
-                position.y += wind.y
-
-
-                position.y = position.y % self.cols
+                position.y = (position.y + wind.y) % self.cols
 
                 #Check si le ballon ne sort pas en haut / en bas
 

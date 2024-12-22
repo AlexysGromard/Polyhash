@@ -1,6 +1,6 @@
 #IMPORTS
 from abc import ABC, abstractmethod
-
+from ..models import DataModel
 # CLASS
 class Algorithm(ABC):
     """
@@ -36,7 +36,7 @@ class Algorithm(ABC):
         """
         
         self.trajet     :list[list[int]]    = []
-        self.data       :'DataModel'        = data
+        self.data       :DataModel        = data
         
         
         
@@ -95,5 +95,8 @@ class Algorithm(ABC):
             case "Mathis":
                 from .Mathis.algoMathis import AlgoMathis
                 return AlgoMathis(data)
+            case "RSMT":
+                from .R_SMT.r_smt import RSMT
+                return RSMT(data)
             case _:
                 raise ValueError("Algo not found")
