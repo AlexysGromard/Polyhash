@@ -4,9 +4,12 @@ from core.models import DataModel,Vector3
 class AlgoMathis:
 
     def compute(self, data: 'DataModel'):
-        d = self.process(data)
-        while d == False:
-            d = self.process(data)
+        d = self._process(data)
+        i = 0
+        while d == False and i < 10:
+            d = self._process(data)
+            i+=1
+        
         return d
 
     def __convertData(self):
@@ -97,7 +100,7 @@ class AlgoMathis:
         new = Vector3(
             place.x +wind.x,
             place.y +wind.y,
-            place.z +wind.z,
+            place.z,
         )
         new.y = new.y % d.cols
 
