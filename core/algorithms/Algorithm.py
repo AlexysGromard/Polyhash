@@ -27,27 +27,26 @@ class Algorithm(ABC):
     
     
     # ATTRIBUTES
-    def __init__(self) -> None:
+    def __init__(self, data) -> None:
         """
         Constructeur de la classe Algorithm
-        """
 
+        Args:
+            data (DataModel): données du problème
+        """
         
         self.trajet     :list[list[int]]    = []
-        self.data       :'DataModel'        = None
+        self.data       :'DataModel'        = data
         
         
         
         
     # ABSTRACT METHODS
     @abstractmethod
-    def compute(self, data:'DataModel') -> list[list[int]]:
+    def compute(self) -> list[list[int]]:
         """
         public
         compute est la méthode qui permet de lancer le calcul de l'algorithme
-
-        Args:
-            data (DataModel): données du problème
 
         Returns:
             list[list[int]]: liste des trajectoires des véhicules
@@ -76,7 +75,7 @@ class Algorithm(ABC):
     
     # STATIC METHODS
     @staticmethod
-    def factory(algo :str) -> 'Algorithm':
+    def factory(algo :str, data :'DataModel') -> 'Algorithm':
         """
         factory methode qui permet de créer une instance de l'algorithme demandé
         utilise le design pattern factory
@@ -95,6 +94,6 @@ class Algorithm(ABC):
         match algo:
             case "Mathis":
                 from .Mathis.algoMathis import AlgoMathis
-                return AlgoMathis()
+                return AlgoMathis(data)
             case _:
                 raise ValueError("Algo not found")

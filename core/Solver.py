@@ -44,9 +44,9 @@ class Solver:
         Raises:
             ValueError: Le chemin d'entrée n'est pas valide
             ValueError: Output directory does not exist
-            ValueError: Invalid display value
-            ValueError: Invalid displays value
-            ValueError: Invalid algorithm value
+            TypeError: Invalid display value
+            TypeError: Invalid displays value
+            TypeError: Invalid algorithm value
         """
         
         # Vérifier si le chemin d'entrée est valide
@@ -60,19 +60,19 @@ class Solver:
         
         # Vérifier si le display est un booléen
         if type(display) is not bool:
-            raise ValueError(f"Invalid display value: {display}")
+            raise TypeError(f"Invalid Typage for display value: {display}")
         
         # Vérifier que le displays est une liste
         if type(displays) is not list:
-            raise ValueError(f"Invalid displays value: {displays}")
+            raise TypeError(f"Invalid Typage for displays value: {displays}")
         if len(displays) != 0:
             for display in displays:
                 if type(display) is not str:
-                    raise ValueError(f"Invalid display value: {display}")
+                    raise TypeError(f"Invalid Typage for displays value: {display}")
         
         # verifier si l'algorithme est valide
         if type(algo) is not str and algo != None:
-            raise ValueError(f"Invalid algorithm value: {algo}")
+            raise TypeError(f"Invalid Typage for algorithm value: {algo}")
         
         
         # si aucun paramètre n'est passé pour l'algorithme, on utilise l'algorithme par défaut
@@ -89,7 +89,7 @@ class Solver:
         self.trajectories   :list[list]         = []
         
         self.datamodel      :'DataModel'        = DataModel.extract_data(self.path)
-        self.algorithm      :Algorithm          = Algorithm.factory(algo)
+        self.algorithm      :Algorithm          = Algorithm.factory(algo, data=self.datamodel)
 
         
         
@@ -98,7 +98,7 @@ class Solver:
         """
         Méthode run qui exécute les calculs et les traitements nécessaires pour résoudre le problème via un algorithme choisi
         """
-        self.trajectories = self.algorithm.compute(self.datamodel)
+        self.trajectories = self.algorithm.compute()
         
         # Affichage 
         DebugPrinter.debug(
@@ -111,89 +111,77 @@ class Solver:
     
     def post_process(self) -> None:
         """
-        Méthode post_process qui exécute les traitements nécessaires pour générer le fichier de sortie et verifier les résultats de la résolution
-        
+        Execute the solution post-process to generate output and verify results.
+
         Raises:
-            ValueError: Sort de la grille
-            
-        Returns:
-            File: Fichier de sortie avec les résultats de la résolution
-        
+            ValueError: If a balloon goes out of bounds.
         """
-
-        # Créer un arbitrateur
+        # Initialize Arbitrator and balloons
         abitrator = Arbitrator(self.datamodel)
-        
-        
-        # Créer une liste de ballons avec les positions initiales
-        
-        balloons = [self.datamodel.starting_cell.copy() for _ in range(self.datamodel.num_balloons)] 
-        
-
+        balloons = [self.datamodel.starting_cell.copy() for _ in range(self.datamodel.num_balloons)]
         DebugPrinter.debug(
             DebugPrinter.header("Solver", "post_process", DebugPrinter.STATES["run"]),
             DebugPrinter.message("Starting post_process", color="yellow"),
-            DebugPrinter.variable("abitrator", "Arbitrator", abitrator),
-            DebugPrinter.variable("balloons", "list[Vector3]", balloons, additional_info={"length": len(balloons)})
+            DebugPrinter.variable("balloons_initial", "list[Vector3]", balloons)
         )
 
-            
         turn_history = []
         score_history = []
-        
-        # Pour chaque tour, on déplace les ballons et on calcule le score
+        total_score = 0
+
         for turn in range(self.datamodel.turns):
-            
-
-            # déplacer les ballons 
-            for i in range(self.datamodel.num_balloons):
-
-                # déplacer le ballon sur l'altitude
-                balloons[i].z += self.trajectories[turn][i]
-
-                # deplacer le ballon
-                balloons[i], is_in = self.datamodel.updatePositionWithWind(balloons[i])
-                
-                # si le updatePositionWithWind est False alors lancer une erreur et arrete le programme
-                if not is_in:
-                    raise ValueError(f"Sort de la grille")
-                
-                # on ajoute le turn à l'historique
-                turn_history.append(copy.deepcopy(balloons))
-            
-            # calculer le score
-            res  = abitrator.turn_score(balloons)
-            score_history.append(res)
-            
             DebugPrinter.debug(
-                DebugPrinter.header("Solver", "post_process", DebugPrinter.STATES["run"]),
-                DebugPrinter.message(f"LOOP turn = {turn}", color="yellow"),
-                DebugPrinter.variable("balloons", "list[Vector3]", balloons, additional_info={"length": len(balloons)}),
-                DebugPrinter.variable("res", "int", res)     
-            )         
+                DebugPrinter.message(f"Processing turn {turn}", color="blue")
+            )
             
-        # Affichage
+            # Move all balloons for this turn
+            for i, balloon in enumerate(balloons):
+                # Update altitude
+                balloon.z += self.trajectories[turn][i]
+                if not (0 <= balloon.z <= self.datamodel.altitudes):
+                    raise ValueError(f"Invalid altitude for balloon {i} at turn {turn}")
+
+                # Apply wind and update position
+                is_in = self.datamodel.updatePositionWithWind(balloon)
+                if not is_in:
+                    DebugPrinter.debug(
+                        DebugPrinter.message(f"Balloon {i} out of bounds at turn {turn}", color="red")
+                    )
+                    raise ValueError("Balloon moved out of bounds")
+            
+            # Add current positions to history after all updates
+            turn_history.append(copy.deepcopy(balloons))
+            
+            # Calculate and log score
+            turn_score = abitrator.turn_score(balloons)
+            total_score += turn_score
+            score_history.append(total_score)
+
+            DebugPrinter.debug(
+                DebugPrinter.variable("turn_score", "int", turn_score),
+                DebugPrinter.variable("cumulative_score", "int", total_score)
+            )
+
+        # Display results
         if self.display:
             for display_name in self.displays:
                 try:
                     match display_name:
                         case "simulation_2d":
-                            print("display")
                             display = Display.register_display(display_name, Simulation2DDisplay)
                             display = Display.create_display(display_name, self.datamodel, turn_history, score_history)
                         case _:
                             DebugPrinter.debug(DebugPrinter.message(f"Unknown display type '{display_name}'", color="red"))
                             continue
-
                     display.render()
                 except Exception as e:
                     DebugPrinter.message(f"Error while rendering display '{display_name}': {e}", color="red")
 
-                      
-            
-        
-        # Exporter les résultats dans le fichier de sortie
-        output = OutputModel(turns=self.datamodel.turns, num_balloons=self.datamodel.num_balloons, adjustments=self.trajectories)
+        # Export results
+        output = OutputModel(
+            turns=self.datamodel.turns,
+            num_balloons=self.datamodel.num_balloons,
+            adjustments=self.trajectories
+        )
         output.export_output_file(self.output)
-        
-        return
+
