@@ -1,68 +1,114 @@
+# IMPORTS
 import random
-from core.models import DataModel,Vector3
 
-class AlgoMathis:
+# import local
+from ...models import DataModel,Vector3
+from ...utils import DebugPrinter
+from ..Algorithm import Algorithm
 
-    def compute(self, data: 'DataModel'):
-        d = self._process(data)
+class AlgoMathis(Algorithm):
+    """
+    Algorithme de Mathis
+
+    Attributes:
+        data (DataModel): data of the problem
+        trajet (list[list[int]]): order of the balloons' movements
+    """
+    
+    def __init__(self, data: 'DataModel') -> None:
+        """
+        Constructeur de la classe AlgoMathis
+
+        Args:
+            data (DataModel): _description_
+        """
+        super().__init__(data)
+
+
+    def compute(self) -> list[list[int]]:
+        """
+        Compute the trajectory of the balloons.
+
+        Returns:
+            list[list[int]]: order of the balloons' movements
+        """
+
+        error = self._process()
         i = 0
-        while d == False and i < 10:
-            d = self._process(data)
+        # Tant que l'erreur n'est pas résolue et que le nombre d'itérations n'est pas dépassé
+        while not error  and i < 1000:
+            error = self._process()
             i+=1
         
-        return d
+        return self.trajet
 
-    def __convertData(self):
+    def _convert_data(self) -> None:
+        """
+        Convert the data of the problem to a format usable by the algorithm.
+        """
         pass
 
-    def process(self, d:' DataModel'):
+    def _process(self) -> bool:
+        """
+        Compute the trajectory of the balloons.
 
-        #Stocke l'historique
-        trajet = []
+        Returns:
+            bool: True if the trajectory is computed, False otherwise
+        """
 
         #Stocke les positions des ballons
-        balloons = [Vector3(d.starting_cell.x, d.starting_cell.y, 0) for i in range(d.num_balloons)]
+        balloons = [self.data.starting_cell.copy() for _ in range(self.data.num_balloons)]
 
         #Boucle principale
-        for turn in range(d.turns):
+        for turn in range(self.data.turns):
             
             #Stocke la ligne des variations de positions des ballons
             trajetRow = []
 
             for balloon in balloons:
-                print(f"{turn}:({balloon.x}, {balloon.y}, {balloon.z})")
+                DebugPrinter.debug(f"{turn}:({balloon.x}, {balloon.y}, {balloon.z})")
                 #Changement altitude
-                altChange = self.randomAlt(d, balloon)
+                altChange = self.__randomAlt( balloon)
 
                
                 old = balloon.z
                 balloon.z+= altChange
 
-                b = self.nextPlace(d, balloon)
-                if b == False:
+                # Mise à jour de la position
+                is_in = self.data.updatePositionWithWind(balloon)
+                
+                # Si le ballon n'est pas dans la carte
+                if not is_in : 
                     i = 0
+                    
+                    # Tant que le ballon n'est pas dans la carte
                     while i < 100:
                         i+= 1
                         
+                        
                         balloon.z = old
-                        altChange = self.randomAlt(d, balloon)           
+                        altChange = self.__randomAlt( balloon)           
                         balloon.z+= altChange
-                        b = self.nextPlace(d, balloon)
-                        if b != False:
+                        is_in= self.data.updatePositionWithWind(balloon)
+                        
+                        # Si le ballon est dans la carte on sort de la boucle
+                        if is_in :
                            i = 10000
                         
                     return False
-                balloon.x = b.x
-                balloon.y = b.y
-                balloon.z = b.z
-                trajetRow.append(altChange)
-                print(f"{turn}:({balloon.x}, {balloon.y}, {balloon.z})")
                 
-            
-            trajet.append(trajetRow)
-        return trajet
+
+                
+                
+                # Ajout de la variation d'altitude pour le ballon
+                trajetRow.append(altChange)
+                DebugPrinter.debug(f"{turn}:({balloon.x}, {balloon.y}, {balloon.z})")
+                
+            # Ajout de la ligne des variations de positions des ballons pour ce tour
+            self.trajet.append(trajetRow)
+        return True
     
-    def randomAlt(self,d: 'DataModel', place: 'Vector3') -> int:
+    def __randomAlt(self, place: 'Vector3') -> int:
         """Calculate a CORRECT random variation of altitude for the balloon. 
 
         Args:
@@ -74,40 +120,7 @@ class AlgoMathis:
         """
         correct = []
         for i in range(-1, 2):
-            if 0 < place.z + i < d.altitudes:
+            if 0 < place.z + i < self.data.altitudes:
                 correct.append(i)
         return correct[random.randint(0, len(correct) - 1)]
 
-    def nextPlace(self, d: 'DataModel', place: 'Vector3') : 
-        """Compute the new position of the balloon after the wind.
-
-        Args:
-            d (DataModel): DataModel in order to get the winds.
-            place (Vector3): Actual position of the balloon (Z coord. matter)
-
-        Returns:
-            Vector3 | False: Return the new position of the balloon OR false if the balloon quit the grid.
-        """
-        
-
-        #Check si l'altitude est correcte
-        if place.z > d.altitudes:
-            return False
-        
-        
-        #Changement de position
-        wind = d.wind_grids[place.z - 1][place.x][place.y]
-        new = Vector3(
-            place.x +wind.x,
-            place.y +wind.y,
-            place.z,
-        )
-        new.y = new.y % d.cols
-
-        #Check si le ballon ne sort pas en haut / en bas
-        
-        if new.x < 0 or new.x >= d.rows:
-           
-            return False
-        
-        return new

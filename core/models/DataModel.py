@@ -114,23 +114,24 @@ class DataModel:
 
 
 
-    def updatePositionWithWind(self, position: 'Vector3') -> tuple[Vector3,bool] :
-            """Compute the new position of the position after the wind.
+    def updatePositionWithWind(self, position: 'Vector3') -> bool :
+            """
+            Compute the new position of the baloon after the wind.
 
             Args:
                 d (DataModel): DataModel in order to get the winds.
-                place (Vector3): Actual position of the position (Z coord. matter)
+                place (Vector3): Actual position of the baloon (Z coord. matter)
 
             Returns:
-                tuple[Vector3,bool]: Return the new position of the position OR false if the position quit
+                bool: True if the baloon is still in the grid, False otherwise.
             """
 
 
             #Check si l'altitude est correcte
             if position.z  > self.altitudes or position.z < 0:
-                return (position, False)
+                return False
             elif position.z == 0:
-                return (position, True)
+                return True
             else :
                 #Changement de position
                 wind = self.wind_grids[position.z - 1][position.x][position.y]
@@ -148,6 +149,6 @@ class DataModel:
                     position.x -= wind.x
                     position.y -= wind.y
 
-                    return (position, False)
+                    return False
 
-                return (position, True)
+                return True

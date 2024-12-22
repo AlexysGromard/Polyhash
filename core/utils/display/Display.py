@@ -1,8 +1,12 @@
-
+# IMPORTS
 from abc import ABC, abstractmethod
 from typing import Any
+
+#import local
 from ...models import DataModel
 
+
+# CLASS
 class Display(ABC):
     """
     Abstract base class for visualizing a simulation.
