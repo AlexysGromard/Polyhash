@@ -1,6 +1,7 @@
 # Start the test with the following command:
 # python -m unittest tests/test_arbitrator.py
 
+import time
 import unittest
 
 from core.Arbitrator import Arbitrator
@@ -256,3 +257,42 @@ class TestTurn_score(unittest.TestCase):
         res = arbitrator.turn_score(ballons)
         self.assertEqual(res, 0)
     
+class TestPerformance(unittest.TestCase):
+    def test_subject_with_execution_time(self):
+        """
+        Test the case where the grid is 3x5 and the radius is 1 for 5 turns.
+        Also calculates the total execution time.
+
+        Expected result: 5
+        """
+
+        # Balloons for each turn
+        ballons_per_turn = [
+            Vector3(1, 3, 1),
+            Vector3(0, 3, 1),
+            Vector3(0, 0, 1),
+            Vector3(0, 1, 1),
+            Vector3(0, 2, 1)
+        ]
+        # Target cells
+        targets = [
+            Vector3(0, 2),
+            Vector3(0, 4)
+        ]
+        # Initialize the arbitrator with the data model
+        arbitrator = Arbitrator(DataModel(rows=3, cols=5, coverage_radius=1, target_cells=targets))
+
+        # Run the test and measure total time
+        total_score = 0
+        start_time = time.time()  # Start time measurement
+
+        for i in range(5):  # 5 turns
+            res = arbitrator.turn_score([ballons_per_turn[i]])
+            total_score += res
+
+        end_time = time.time()  # End time measurement
+        execution_time = end_time - start_time
+
+        # Print total execution time
+        print(f"Total execution time: {execution_time:.6f} seconds")
+        self.assertEqual(total_score, 5)
