@@ -52,7 +52,7 @@ class Arbitrator:
         Returns:
             int: The score of the solution.
         '''
-        def columndist(c1, c2, grid_width) -> int:
+        def columndist(c1, c2) -> int:
             '''
             The function to calculate the distance between two columns.
 
@@ -66,7 +66,7 @@ class Arbitrator:
             '''
             return min(abs(c1 - c2), grid_width - abs(c1 - c2))
 
-        def is_covered(r, c, u, v, coverage_radius) -> bool:
+        def is_covered(r, c, u, v) -> bool:
             '''
             The function to check if the target is covered by the balloon.
 
@@ -80,11 +80,15 @@ class Arbitrator:
             Returns:
                 bool: True if the target is covered by the balloon, False otherwise.
             '''
-            return (r - u) ** 2 + columndist(c, v, self.get_grid_size()[1]) ** 2 <= coverage_radius ** 2
+            return (r - u) ** 2 + columndist(c, v) ** 2 <= coverage_radius_sq
 
         # Check if all arguments are provided correctly
         if not balloons or not self.target_cells or self.coverage_radius < 0:
             raise TypeError("Invalid arguments.")
+        
+        # Pre-calculate constants
+        coverage_radius_sq = self.coverage_radius ** 2
+        grid_width = self.get_grid_size()[1]
 
         score = 0
 
@@ -96,9 +100,8 @@ class Arbitrator:
                 # Check if the balloon altitude is not 0
                 if balloon.z == 0:
                     break
-                r, c = balloon.x, balloon.y # Balloon coordinates
                 # Check if the target is covered by the balloon
-                if is_covered(r, c, u, v, self.coverage_radius):
+                if is_covered(balloon.x, balloon.y, u, v):
                     if debug:
                         print(f"Balloon at ({r}, {c}) covers target at ({u}, {v})")
                     score += 1
