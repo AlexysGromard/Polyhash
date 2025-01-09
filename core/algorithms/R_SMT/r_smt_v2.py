@@ -1,129 +1,108 @@
 import random
 from core.models import DataModel,Vector3
-#from core.Arbitrator import Arbitrator
-from testMR_Arb_opti import Arbitrator
+from core.Arbitrator import Arbitrator
 from time import *
 import multiprocessing
 
 class RSMTv2:
-    def compute(self, data: 'DataModel'):
+    def compute(self, data: 'DataModel', time=100):
         self.d = data
-        self.arbitator = Arbitrator(data)  
+        self.arbitator = Arbitrator(data)
+
+        #Tuning parameters
+        self.param_time = time
         
-        return self._randomProcess()
+        #Computing the path
+        result = self._process()
+
+        #If the algorithm find a way, it return the path, else it restart the algorithm
+        if result[0] == True:
+            return result[1]
+        print("Hello")
+        #The algo didn't find a path, so let's create another algo
+        return self.compute(data)
+
     
     def _convertData():
         pass
 
-    def _process(self):
-        #On compute un premier tour les 10 prochains
+    def _process(self)-> tuple[bool, list[list[int]], int, int, list[int]]:
+        """Fonctionnement de l'algo: cherche (aléatoirement) un meilleur path pour les X premiers
+        tours. Ensuite, cherche le meilleur path pour les X tours suivant... Fonctionnement par bloc
+
+        Returns:
+           tuple: (etat: bool, path list(list(int)), balloon_pb: int, score: int, listeScore list(int))
+        """
         
+        
+        #Stockage du résultat du path en cours
         fullPath = [True, [],  None, 0,None, [Vector3(self.d.starting_cell.x, self.d.starting_cell.y, 0) for i in range(self.d.num_balloons)]]
-        for i in range(2):
+        
+        #Calcul du pas (les X tours par bloc)
+        tours = self.d.turns
+        pas = 50
+        if tours < 10:
+            pas = 12
+        elif tours < 30:
+            pas = 10
+        elif tours < 100 :
+            pas = 20
+
+        #Tableau du nombre de tour et temps accordé pour chaque bloc de calcul (en fonction du pas)
+        tab = [(pas, self.param_time / (tours / pas)) for _ in range(int(tours / pas) - 1)]
+
+        #On vérifie qu'on a le bon nombre de tour:
+        toAdd = tours
+        for nbTours, _ in tab:
+            toAdd -= nbTours
+        tab.append((toAdd,  self.param_time / (tours / pas)))
+        
+
+        #On lance les tours de blocs (doit faire {nbTour} tours avec un temps max de {temps})
+        for nbTour, temps in tab:
             start = time()
-            best = self._explore(10, 
+            
+            #Compute a first random solution (the actual best-one)
+            best = self._explore(nbTour, 
                              fullPath[5],
                              [0 for _ in  range(self.d.turns)], 
-                             0)#[1]
+                             0)
 
+            #count the number of path tried for this chunk (print purposes)
             cnt = 1
-            while time() - start < 20:
+
+            #Compute other path if we've got the time
+            while time() - start < temps:
                 cnt +=  1
-                r = self._explore(10, 
+                self.queue = 40
+                r = self._explore(nbTour, 
                                fullPath[5],
                                 best[4], 
                                 0)
                 if r[3] > best[3]:
                     best = r
-            print(f"Our best is: {best[3]}, and we try: {cnt} times")
-            fullPath[1] = fullPath[1] + best[1]
-            fullPath[3]+= best[3]
-            fullPath[5] = best[5]
-        return fullPath
-    def tryes(self, tur, temps):
-        useLess += 1
-        start = time()
-        best = self._explore(tur, 
-                        self.fullPath[5],
-                        [0 for _ in  range(self.d.turns)], 
-                        0)#[1]
 
-        cnt = 1
-        while time() - start < temps:
-            cnt +=  1
-            r = self._explore(tur, 
-                        self.fullPath[5],
-                            best[4], 
-                            0)
-            if r[3] > best[3]:
-                best = r
-        if best[0] == False:     
-            return (0, 0, 0, 0, 0)
-        return best
-        
-    def _newProcess(self):
-        #On compute un premier tourles 10 prochains
-        id = random.randint(0,  10000)
-        self.fullPath = [True, [],  None, 0,None, [Vector3(self.d.starting_cell.x, self.d.starting_cell.y, 0) for i in range(self.d.num_balloons)]]
-        
-        first = 200
-        
-        tab = [(10, 5), (10,5)]
-        
-        for tur, temps in tab:
-
-            
-            with multiprocessing.Pool(8) as pool:
-                results = pool.map(self.tryes, [(tur, temps) for _ in range(8)])
-            best = results[0]
-            for essaie in results:
-                if essaie[3] > best[3]:
-                    best = essaie
-            print(f"Our best is: {best[3]}, and we try: {cnt} times id {id}")
-            self.fullPath[1] = self.fullPath[1] + best[1]
-            self.fullPath[3]+= best[3]
-            self.fullPath[5] = best[5]
-        
-        
-        return self.fullPath
-
-    def _randomProcess(self):
-        #On compute un premier tour les 10 prochains
-        id = random.randint(0,  10000)
-        fullPath = [True, [],  None, 0,None, [Vector3(self.d.starting_cell.x, self.d.starting_cell.y, 0) for i in range(self.d.num_balloons)]]
-        
-       
-        
-        tab = [(4, 2) for _ in range(10)]
-        for tur, temps in tab:
-            start = time()
-            best = self._explore(tur, 
-                             fullPath[5],
-                             [0 for _ in  range(self.d.turns)], 
-                             0)#[1]
-
-            cnt = 1
-            while time() - start < temps:
-                cnt +=  1
-                r = self._explore(tur, 
-                               fullPath[5],
-                                best[4], 
-                                0)
-                if r[3] > best[3]:
-                    #Check si on peut continuer d'avancer:
-                    tester = self._explore(5, best[5], best[4], 0)
-                    if tester[1] != False:
-                        best = r
+            #Check if the exploration find a path (if False, the previous 
+            # chunk was wrong: there isn't any way to contiune the path without 
+            # having a loon out of the map)
             if best[0] == False:
-                
+                print("process dies:", id)
                 return (0, 0, 0, 0, 0)
-            print(f"Our best is: {best[3]}, and we try: {cnt} times id {id}")
+            
+
+            #print(f"Our best is: {best[3]}, and we try: {cnt} times id {id}")
+
+            #Adding the chunk to the fullPath
             fullPath[1] = fullPath[1] + best[1]
             fullPath[3]+= best[3]
             fullPath[5] = best[5]
+
+
+
+
         return fullPath
 
-    def _explore(self, turn: int, balls: list[Vector3], best: list[int], score: int) -> tuple:
+    def _explore(self, turn: int, balls: list[Vector3], best: list[int], score: int, confirmTest = False) -> tuple[bool, list[list[int]], int, int, list[int]]:
         """ Explore un nouveau tour en fonction de la position des ballons et
         du nombre de tour restant.
 
@@ -132,12 +111,12 @@ class RSMTv2:
             balls (list[Vector3]): Liste de vector3 avec la position des ballons
             best (list[int]): les scores par tours du meilleur algo trouvé actuellemnt
             score (int): Score actuel (au tour n-1 donc)
+            confirmTest (bool) : vrai si l'algo est lancé pour tester les 10 prochains tours (sinon, il vérifiera que l'on peut avancer d'au moins 10 tours)
 
         Returns:
             tuple: (etat: bool, path list(list(int)), balloon_pb: int, score: int, listeScore list(int))
         """
-       
-
+        
         #Compute available altitude variation foreach balloon
         altVariations = []
         for b  in balls:
@@ -173,28 +152,46 @@ class RSMTv2:
                     newBalls[i].z += choosen[i]
 
                     #Applying wind movement to the balloon:
+                    loonWindResult = True
                     if newBalls[i].z  > 0:
-                        newBalls[i] = self._nextPlace(newBalls[i])
+                        loonWindResult = self.d.updatePositionWithWind(newBalls[i])
 
                     #Checking if the balloon stay in the map:
-                    if newBalls[i] == False:
+                    if not loonWindResult:
                         #Remove the alt variation because it creates a problem:
                         altVariations[i].remove(choosen[i])
-
             #Calculate the score:
             Newscore = score + self.arbitator.turn_score(newBalls)
 
+            
           
             #Si c'est le dernier tour:
             if turn == 1:
-                return (True, [choosen], None, Newscore, [Newscore], newBalls)
-            
-            #On n'a pas encore fini: on explore la suite
-            nextStep = self._explore(turn -1, newBalls, best, Newscore)
 
-            #Si le next est bloqué à cause d'un ballon, on suppr l'alt change du ballon:
-            if nextStep[0] == False:
-                altVariations[nextStep[2]].remove(choosen[nextStep[2]])
+                if confirmTest == True:
+                   
+                    return (True, [choosen], None, Newscore, [Newscore], newBalls)
+                
+                else:
+                    
+                    #Check that we will be able to move the loon at least 8 turns (avoid to be blocked)
+                    tester = self._explore(8, newBalls, best, Newscore, True)
+                   
+
+                    if tester[0] == True:
+                        #We can move all the loon during 8 turns: we return the path
+                        return (True, [choosen], None, Newscore, [Newscore], newBalls)
+                    else: 
+                        #A loon quit the map during the next 8 turns: we remove this alt variation and find another combination.
+                        altVariations[tester[2]].remove(choosen[tester[2]])               
+            else:
+                
+                #On n'a pas encore fini: on explore la suite
+                nextStep = self._explore(turn -1, newBalls, best, Newscore, confirmTest)
+              
+                #Si le next est bloqué à cause d'un ballon, on suppr l'alt change du ballon:
+                if nextStep[0] == False:
+                    altVariations[nextStep[2]].remove(choosen[nextStep[2]])
         
 
         return (True, [choosen] +  nextStep[1], None, nextStep[3], [Newscore] + nextStep[4], nextStep[5]) #(etat, path, ball causing pb, score)
@@ -216,38 +213,3 @@ class RSMTv2:
             if 0 < place.z + i <= self.d.altitudes:
                 correct.append(i)
         return correct
-
-    def _nextPlace(self, place: 'Vector3') : 
-        """Compute the new position of the balloon after the wind.
-
-        Args:
-            d (DataModel): DataModel in order to get the winds.
-            place (Vector3): Actual position of the balloon (Z coord. matter)
-
-        Returns:
-            Vector3 | False: Return the new position of the balloon OR false if the balloon quit the grid.
-        """
-        
-
-        #Check si l'altitude est correcte
-        if place.z  > self.d.altitudes:
-            return False
-        if place.z == 0:
-            return place
-        
-        #Changement de position
-        wind = self.d.wind_grids[place.z - 1][place.x][place.y]
-        new = Vector3(
-            place.x +wind.x,
-            place.y +wind.y,
-            place.z,
-        )
-        new.y = new.y % self.d.cols
-
-        #Check si le ballon ne sort pas en haut / en bas
-        
-        if new.x < 0 or new.x >= self.d.rows:
-            
-            return False
-        
-        return new
