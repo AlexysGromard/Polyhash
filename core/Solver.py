@@ -2,6 +2,7 @@
 import os
 import copy
 from pathlib import Path
+import time
 
 
 # import local
@@ -98,7 +99,11 @@ class Solver:
         """
         Méthode run qui exécute les calculs et les traitements nécessaires pour résoudre le problème via un algorithme choisi
         """
+        start = time.time()
         self.trajectories = self.algorithm.compute()
+        DebugPrinter.debug(
+            f"timer : {time.time() - start}"
+            )
         
         # Affichage 
         DebugPrinter.debug(
@@ -137,8 +142,13 @@ class Solver:
             # Move all balloons for this turn
             for i, balloon in enumerate(balloons):
                 # Update altitude
-                balloon.z += self.trajectories[turn][i]
+                balloon.z += self.trajectories[i][turn]
+
                 if not (0 <= balloon.z <= self.datamodel.altitudes):
+                    DebugPrinter.debug(
+                        f" Altitude du ballon {i} : {balloon.z}",
+                        f'{self.trajectories[turn]}'
+                    )
                     raise ValueError(f"Invalid altitude for balloon {i} at turn {turn}")
 
                 # Apply wind and update position
