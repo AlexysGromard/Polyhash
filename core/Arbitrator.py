@@ -103,7 +103,7 @@ class Arbitrator:
                 # Check if the target is covered by the balloon
                 if is_covered(balloon.x, balloon.y, u, v):
                     if debug:
-                        print(f"Balloon at ({r}, {c}) covers target at ({u}, {v})")
+                        print(f"Balloon at ({balloon.x}, {balloon.y}) covers target at ({u}, {v})")
                     score += 1
                     break
         return score
