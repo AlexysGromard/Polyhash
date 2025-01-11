@@ -1,7 +1,7 @@
 # IMPORTS
 from multiprocessing import Pool, cpu_count
 from typing import Callable, Any, Iterable
-
+import copy
 # CLASS
 class ParallelExecutor:
     """
@@ -77,3 +77,83 @@ class ParallelExecutor:
         with Pool(processes=cls._num_processes) as pool:
             results = pool.starmap(func, args_list)
         return results
+
+
+
+
+
+
+    @classmethod
+    def worker_method(cls, method_name, instance_data, *args):
+        """
+        Fonction utilitaire pour appeler une méthode sur une instance d'objet avec sérialisation des attributs.
+        
+        Args:
+            method_name (str): Le nom de la méthode à appeler.
+            instance_data (dict): Données de l'instance (attributs).
+            *args: Les arguments à passer à la méthode.
+        
+        Returns:
+            Any: Résultat de la méthode appelée.
+        """
+        # Récupérer la classe et reconstruire l'instance avec les attributs sérialisés
+        instance = cls.rebuild_instance_from_data(instance_data)
+        method = getattr(instance, method_name)
+        return method(*args)
+    
+    @classmethod
+    def execute_class(cls, obj_class: object, method_name: str, *args) -> list:
+        """
+        Exécute une méthode d'une classe en parallèle.
+        
+        Args:
+            obj_class (object): La classe à instancier pour chaque processus.
+            method_name (str): Le nom de la méthode de l'instance à exécuter.
+            *args: Les arguments à passer à la méthode.
+
+        Returns:
+            list: Liste des résultats retournés par la méthode de l'instance de la classe.
+        """
+        # Sérialiser les données de l'instance
+        instance_data = cls.serialize_instance(obj_class)
+        
+        # Exécuter les méthodes en parallèle
+        with Pool(processes=cls._num_processes) as pool:
+            results = pool.starmap(cls.worker_method, [(method_name, instance_data, *args) for _ in range(cls._num_processes)])
+        
+        return results
+
+    @classmethod
+    def serialize_instance(cls, obj_class: object) -> dict:
+        """
+        Sérialise l'instance de la classe en extrayant ses attributs.
+
+        Args:
+            obj_class (object): L'instance de la classe à sérialiser.
+
+        Returns:
+            dict: Données sérialisées de l'instance.
+        """
+        instance_data = {
+            'class_name': obj_class.__class__,
+            'attributes': obj_class.__dict__  # Extraire les attributs de l'instance
+        }
+        return instance_data
+
+    @classmethod
+    def rebuild_instance_from_data(cls, instance_data: dict):
+        """
+        Reconstruit une instance de la classe à partir des données sérialisées.
+
+        Args:
+            instance_data (dict): Données sérialisées de l'instance.
+        
+        Returns:
+            object: Instance reconstruite.
+        """
+        # Créer une nouvelle instance de la classe et attribuer les valeurs
+        class_name = instance_data['class_name']
+        instance = class_name.__new__(class_name)
+        for attr, value in instance_data['attributes'].items():
+            setattr(instance, attr, value)
+        return instance

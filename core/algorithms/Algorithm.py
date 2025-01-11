@@ -99,7 +99,7 @@ class Algorithm(ABC):
                 from .R_SMT.r_smt import RSMT
                 return RSMT(data)
             case "EBMIPS":
-                from .ExplorationBMIPS import EBMIPS
-                return EBMIPS(data)
+                from .ExplorationBMIPS import EBMIPS, EBMIPSP
+                return EBMIPSP(data)
             case _:
                 raise ValueError("Algo not found")

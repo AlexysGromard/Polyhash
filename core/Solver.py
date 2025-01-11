@@ -195,4 +195,5 @@ class Solver:
             adjustments=self.trajectories
         )
         output.export_output_file(self.output)
+        print(f"total - {total_score}")
 
