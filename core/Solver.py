@@ -142,7 +142,7 @@ class Solver:
             # Move all balloons for this turn
             for i, balloon in enumerate(balloons):
                 # Update altitude
-                balloon.z += self.trajectories[i][turn]
+                balloon.z += self.trajectories[turn][i]
 
                 if not (0 <= balloon.z <= self.datamodel.altitudes):
                     DebugPrinter.debug(
@@ -153,11 +153,12 @@ class Solver:
 
                 # Apply wind and update position
                 is_in = self.datamodel.updatePositionWithWind(balloon)
-                if not is_in:
-                    DebugPrinter.debug(
-                        DebugPrinter.message(f"Balloon {i} out of bounds at turn {turn}", color="red")
-                    )
-                    raise ValueError("Balloon moved out of bounds")
+                # if not is_in:
+                #     DebugPrinter.debug(
+                #         DebugPrinter.message(f"Balloon {i} out of bounds at turn {turn}", color="red"),
+                #         DebugPrinter.message(f"Balloon placed (x:{balloon.x}, y: {balloon.y} ,z:{balloon.z}) move by (x : {self.datamodel.wind_grids[balloon.z + self.trajectories[turn][i]][balloon.x][balloon.y].x}, y: {self.datamodel.wind_grids[balloon.z + self.trajectories[turn][i]][balloon.x][balloon.y].y}) with order {self.trajectories[turn][i]}", color="red")
+                #     )
+                #     raise ValueError("Balloon moved out of bounds")
             
             # Add current positions to history after all updates
             turn_history.append(copy.deepcopy(balloons))

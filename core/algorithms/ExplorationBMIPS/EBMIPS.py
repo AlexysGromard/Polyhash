@@ -16,7 +16,7 @@ class EBMIPS(Algorithm) :
         """
         super().__init__(data)
         
-        self.num_sonde : int = 20 # self.data.num_balloons
+        self.num_sonde : int = 400 # self.data.num_balloons
         self.explored : list[list[int,list[int]]] = []
         self.nb_save_sonde : int = 10
         
@@ -121,47 +121,36 @@ class EBMIPS(Algorithm) :
         # recuperer le resultat
         res = arbitre.turn_score(sondes)
         
-        self.explored = [[res, [1]] for _ in range(self.num_sonde)]
+        self.explored = [[res, [1], False] for _ in range(self.num_sonde)]
         
-        
+        nb_bounds = 0
         
         # On explore les sondes pendant x tours
         while cpt < self.data.turns -1 :
             # On fait un tour
             for place, sonde in enumerate(sondes):
+                if not self.explored[place][2] :
                 # On donne des ordres aleatoires pour chaque sondes entre (-1,0,1) mais si on touche l'alitude max ou min, on reduit les choix
-                order = generate_random_orders(sonde)
-                sonde.z += order
-                
-                is_in = self.data.updatePositionWithWind(sonde)
-                
-                nb_essaie = 0
-                while not is_in:
+                    order = generate_random_orders(sonde)
+                    sonde.z += order
                     
-                    if nb_essaie > 3 :
-                        
-                        self.explored[place][1][cpt] 
+                    is_in = self.data.updatePositionWithWind(sonde)
+                    
+                    #nb_essaie = 0
+                    if not is_in :
+                        self.explored[place][2] = not self.explored[place][2]
+
+                        nb_bounds += 1
                     
                     else :
-                    
-                        sonde -= order
-                        
-                        order = generate_orders(sonde, order)
-                        
-                        sonde += order
-                        
-                        self.data.updatePositionWithWind(sonde)
-                    
 
-                         
+                        # moyenne des resultats
+                        self.explored[place][0] += self.arbitre_sonde(sonde)
+                        self.explored[place][1].append(order)
                     
-                    
-               
-                # moyenne des resultats
-                self.explored[place][0] += self.arbitre_sonde(sonde)
-                self.explored[place][1].append(order)
-                
             cpt += 1
+        print(f'ok ? {nb_bounds}')
+
             
         # Calculer la moyenne de chaque sonde pour les x tours
         for i in range(self.num_sonde):
@@ -175,12 +164,15 @@ class EBMIPS(Algorithm) :
         protected
         _explore_selection est la méthode qui permet de choisir la meilleure sonde parmis les sondes explorées
         """
+        # Filtrer les éléments où la troisième valeur est False
+        filtered_explored = [item for item in self.explored if item[2] is False]
+
         # Trier les données par la première colonne (décroissant)
-        self.explored = sorted(self.explored, key=lambda item: item[0], reverse=True)[:self.nb_save_sonde + 1]
+        self.explored = sorted(filtered_explored, key=lambda item: item[0], reverse=True)[:self.nb_save_sonde + 1]
 
         print(f'len de sonde save {len(self.explored)}')
         
-        print(self.explored)
+
         
         
     def _snake(self):
@@ -188,7 +180,7 @@ class EBMIPS(Algorithm) :
         creer des chaine de ballon
         """
         
-        def duplicate_and_modify(lst, gap: int):
+        def duplicate_and_modify(lst, gap: int) -> list :
             """
             Duplique une liste et modifie chaque duplication en retirant des éléments à la fin 
             et en ajoutant des zéros au début en fonction du pas donné.
@@ -215,19 +207,30 @@ class EBMIPS(Algorithm) :
         
         for i in range(self.nb_save_sonde):  # 10 sondes
             for j in range(nb):  # Nombre de duplications basées sur coverage_radius
-                self.trajet.append(duplicate_and_modify(self.explored[i][1], self.data.coverage_radius * (j + 1)))
+                gap = self.data.coverage_radius * (j)
+                if gap == 0 :
+                    self.trajet.append(self.explored[i][1])
+                else :
+                    
+                    self.trajet.append(duplicate_and_modify(self.explored[i][1], gap ))
 
         for v in range(reste) :
-                self.trajet.append(duplicate_and_modify(self.explored[self.nb_save_sonde ][1], self.data.coverage_radius * (v + 1)))
+            gap = self.data.coverage_radius * v
+            if  gap == 0 :    
+                self.trajet.append(self.explored[self.nb_save_sonde ][1])
+            else :
+                self.trajet.append(duplicate_and_modify(self.explored[self.nb_save_sonde ][1], gap))
 
-            
+
         print(f"len packet snake {len(self.trajet)}")
         print(f"len -> {len(self.trajet[0])} {len(self.trajet[52])}")
         print(f"len -> {len(self.trajet[1])} {len(self.trajet[52])}")
         print(f'exlporateur {len(self.explored[0][1]) } {len(self.explored[10][1]) }')
         print(f' Wath {self.trajet[11]}')
 
-
+        # transposé
+        self.trajet = [[row[k] for row in self.trajet] for k in range(len(self.trajet[0]))]
+            
         
         
         
@@ -299,8 +302,3 @@ class EBMIPS(Algorithm) :
 
                 
                 
-                
-                
-                
-        
-
