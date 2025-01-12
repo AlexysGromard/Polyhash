@@ -74,7 +74,7 @@ class Solver:
         # verifier si l'algorithme est valide
         if type(algo) is not str and algo != None:
             raise TypeError(f"Invalid Typage for algorithm value: {algo}")
-        
+
         
         # si aucun paramètre n'est passé pour l'algorithme, on utilise l'algorithme par défaut
         if algo == None :
@@ -92,8 +92,17 @@ class Solver:
         self.datamodel      :'DataModel'        = DataModel.extract_data(self.path)
         self.algorithm      :Algorithm          = Algorithm.factory(algo, data=self.datamodel)
 
+        self._history_score :list[int]          = []
         
-        
+    def get_totalscore(self) -> int:
+        #todo bug possible si le score n'a rien
+        return self._history_score[-1]
+    
+    def get_AVGscore(self) -> float:
+        #todo bug possible si le score n'a rien
+        return sum(self._history_score) / len(self._history_score)
+    
+    
         
     def run(self) -> None:
         """
@@ -131,7 +140,6 @@ class Solver:
         )
 
         turn_history = []
-        score_history = []
         total_score = 0
 
         for turn in range(self.datamodel.turns):
@@ -144,29 +152,32 @@ class Solver:
                 # Update altitude
                 balloon.z += self.trajectories[turn][i]
 
-                if not (0 <= balloon.z <= self.datamodel.altitudes):
-                    DebugPrinter.debug(
-                        f" Altitude du ballon {i} : {balloon.z}",
-                        f'{self.trajectories[turn]}'
-                    )
-                    raise ValueError(f"Invalid altitude for balloon {i} at turn {turn}")
 
                 # Apply wind and update position
                 is_in = self.datamodel.updatePositionWithWind(balloon)
+                
+                # si il y a une erreur de calcule
                 # if not is_in:
-                #     DebugPrinter.debug(
-                #         DebugPrinter.message(f"Balloon {i} out of bounds at turn {turn}", color="red"),
-                #         DebugPrinter.message(f"Balloon placed (x:{balloon.x}, y: {balloon.y} ,z:{balloon.z}) move by (x : {self.datamodel.wind_grids[balloon.z + self.trajectories[turn][i]][balloon.x][balloon.y].x}, y: {self.datamodel.wind_grids[balloon.z + self.trajectories[turn][i]][balloon.x][balloon.y].y}) with order {self.trajectories[turn][i]}", color="red")
-                #     )
-                #     raise ValueError("Balloon moved out of bounds")
+                #     if not (0 <= balloon.z <= self.datamodel.altitudes):
+                #         DebugPrinter.debug(
+                #             f" Altitude du ballon {i} : {balloon.z}",
+                #             f'{self.trajectories[turn]}'
+                #         )
+                #         raise ValueError(f"Invalid altitude for balloon {i} at turn {turn}")
+                #     else :
+                #         DebugPrinter.debug(
+                #             DebugPrinter.message(f"Balloon {i} out of bounds at turn {turn}", color="red"),
+                #             DebugPrinter.message(f"Balloon placed (x:{balloon.x}, y: {balloon.y} ,z:{balloon.z}) move by (x : {self.datamodel.wind_grids[balloon.z + self.trajectories[turn][i]][balloon.x][balloon.y].x}, y: {self.datamodel.wind_grids[balloon.z + self.trajectories[turn][i]][balloon.x][balloon.y].y}) with order {self.trajectories[turn][i]}", color="red")
+                #         )
+                #         raise ValueError("Balloon moved out of bounds")
             
             # Add current positions to history after all updates
-            turn_history.append(copy.deepcopy(balloons))
+            turn_history.append([balloon.copy() for balloon in balloons]) #copy.deepcopy(balloons)
             
             # Calculate and log score
             turn_score = abitrator.turn_score(balloons)
             total_score += turn_score
-            score_history.append(total_score)
+            self._history_score.append(total_score)
 
             DebugPrinter.debug(
                 DebugPrinter.variable("turn_score", "int", turn_score),
@@ -180,7 +191,7 @@ class Solver:
                     match display_name:
                         case "simulation_2d":
                             display = Display.register_display(display_name, Simulation2DDisplay)
-                            display = Display.create_display(display_name, self.datamodel, turn_history, score_history)
+                            display = Display.create_display(display_name, self.datamodel, turn_history, self._history_score)
                         case _:
                             DebugPrinter.debug(DebugPrinter.message(f"Unknown display type '{display_name}'", color="red"))
                             continue

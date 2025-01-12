@@ -17,9 +17,9 @@ class EBMIPSP(Algorithm) :
         """
         super().__init__(data)
         
-        self.num_sonde : int = 400 # self.data.num_balloons
+        self.num_sonde : int = 400 # self.data.num_balloons | nb sonde envoyer pour tester des chemin
         self.explored : list[list[int,list[int]]] = []
-        self.nb_save_sonde : int = 10
+        self.nb_save_sonde : int = 17 #
         
 
         
@@ -168,7 +168,7 @@ class EBMIPSP(Algorithm) :
                         self.explored[place][1].append(order)
                     
             cpt += 1
-        print(f'ok ? {nb_bounds}')
+        #print(f'ok ? {nb_bounds}')
 
             
         self._explored_avg()
@@ -191,7 +191,7 @@ class EBMIPSP(Algorithm) :
         # Trier les données par la première colonne (décroissant)
         self.explored = sorted(filtered_explored, key=lambda item: item[0], reverse=True)[:self.nb_save_sonde + 1]
 
-        print(f'len de sonde save {len(self.explored)}')
+        #print(f'len de sonde save {len(self.explored)}')
         
 
         
@@ -244,10 +244,10 @@ class EBMIPSP(Algorithm) :
 
 
         print(f"len packet snake {len(self.trajet)}")
-        print(f"len -> {len(self.trajet[0])} {len(self.trajet[52])}")
-        print(f"len -> {len(self.trajet[1])} {len(self.trajet[52])}")
-        print(f'exlporateur {len(self.explored[0][1]) } {len(self.explored[10][1]) }')
-        print(f' Wath {self.trajet[11]}')
+        # print(f"len -> {len(self.trajet[0])} {len(self.trajet[-1])}")
+        # print(f"len -> {len(self.trajet[1])} {len(self.trajet[-1])}")
+        # print(f'exlporateur {len(self.explored[0][1]) } {len(self.explored[-1][1]) }')
+        # print(f' Wath {self.trajet[-1]}')
 
         # transposé
         self.trajet = [[row[k] for row in self.trajet] for k in range(len(self.trajet[0]))]
