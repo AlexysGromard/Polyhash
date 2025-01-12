@@ -114,38 +114,27 @@ class DataModel:
 
 
 
-    def updatePositionWithWind(self, position: 'Vector3') -> bool :
-            """
-            Compute the new position of the baloon after the wind.
+    def updatePositionWithWind(self, position: 'Vector3') -> bool:
+        """
+        Compute the new position of the balloon after the wind.
 
-            Args:
-                d (DataModel): DataModel in order to get the winds.
-                place (Vector3): Actual position of the baloon (Z coord. matter)
+        Args:
+            position (Vector3): Actual position of the balloon (Z coord. matters)
 
-            Returns:
-                bool: True if the baloon is still in the grid, False otherwise.
-            """
+        Returns:
+            bool: True if the balloon is still in the grid, False otherwise.
+        """
+        if not (0 <= position.z < self.altitudes):
+            return False
+        if position.z == 0:
+            return True
 
+        wind = self.wind_grids[position.z - 1][position.x][position.y]
+        new_x = position.x + wind.x
+        new_y = (position.y + wind.y) % self.cols
 
-            #Check si l'altitude est correcte
-            if position.z  > self.altitudes or position.z < 0:
-                return False
-            elif position.z == 0:
-                return True
-            else :
-                #Changement de position
-                wind = self.wind_grids[position.z - 1][position.x][position.y]
+        if 0 <= new_x < self.rows:
+            position.x, position.y = new_x, new_y
+            return True
 
-                position.x += wind.x
-                position.y = (position.y + wind.y) % self.cols
-
-                #Check si le ballon ne sort pas en haut / en bas
-
-                if position.x < 0 or position.x >= self.rows:
-                    # remmetre le ballon a la position precedente
-                    position.x -= wind.x
-                    position.y -= wind.y
-
-                    return False
-
-                return True
+        return False
