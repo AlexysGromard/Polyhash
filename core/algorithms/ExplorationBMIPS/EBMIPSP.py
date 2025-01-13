@@ -17,7 +17,7 @@ class EBMIPSP(Algorithm) :
         """
         super().__init__(data)
         
-        self.num_sonde : int = 20 # self.data.num_balloons
+        self.num_sonde : int = 1200 # self.data.num_balloons
         self.explored : list[list[int,list[int],bool]] = []
         self.nb_save_sonde : int = 10
         
@@ -57,7 +57,7 @@ class EBMIPSP(Algorithm) :
 
         
         # Lancer les explorations en parallèle
-        ParallelExecutor._num_processes = 1
+        # ParallelExecutor._num_processes = 1
         explored_chunks = ParallelExecutor.execute_class(self, "_explore")
         print(f"end - {time.time() - start}")
 
@@ -210,7 +210,7 @@ class EBMIPSP(Algorithm) :
         self.explored = sorted(filtered_explored, key=lambda item: item[0], reverse=True)#[:self.nb_save_sonde + 1]
 
 
-        print(f'len de sonde save {len(self.explored)}')
+        #print(f'len de sonde save {len(self.explored)}')
         
 
         
@@ -266,7 +266,7 @@ class EBMIPSP(Algorithm) :
                 self.trajet.append(duplicate_and_modify(self.explored[self.nb_save_sonde ][1], gap))
 
 
-        print(f"len packet snake {len(self.trajet)}")
+        #print(f"len packet snake {len(self.trajet)}")
         # print(f"len -> {len(self.trajet[0])} {len(self.trajet[-1])}")
         # print(f"len -> {len(self.trajet[1])} {len(self.trajet[-1])}")
         # print(f'exlporateur {len(self.explored[0][1]) } {len(self.explored[-1][1]) }')

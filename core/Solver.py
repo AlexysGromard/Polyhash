@@ -162,15 +162,14 @@ class Solver:
                             f'{self.trajectories[turn]}'
                         )
                         raise ValueError(f"Invalid altitude for balloon {i} at turn {turn}")
-
-                # Apply wind and update position
-                is_in = self.datamodel.updatePositionWithWind(balloon)
-                # if not is_in:
-                #     DebugPrinter.debug(
-                #         DebugPrinter.message(f"Balloon {i} out of bounds at turn {turn}", color="red"),
-                #         DebugPrinter.message(f"Balloon placed (x:{balloon.x}, y: {balloon.y} ,z:{balloon.z}) move by (x : {self.datamodel.wind_grids[balloon.z + self.trajectories[turn][i]][balloon.x][balloon.y].x}, y: {self.datamodel.wind_grids[balloon.z + self.trajectories[turn][i]][balloon.x][balloon.y].y}) with order {self.trajectories[turn][i]}", color="red")
-                #     )
-                #     raise ValueError("Balloon moved out of bounds")
+                    else :
+                        DebugPrinter.debug(
+                            DebugPrinter.message(f"Balloon {i} out of bounds at turn {turn}", color="red"),
+                            DebugPrinter.message(f"Balloon placed (x:{balloon.x}, y: {balloon.y} ,z:{balloon.z}) move by (x : {self.datamodel.wind_grids[balloon.z + self.trajectories[turn][i]][balloon.x][balloon.y].x}, y: {self.datamodel.wind_grids[balloon.z + self.trajectories[turn][i]][balloon.x][balloon.y].y}) with order {self.trajectories[turn][i]}", color="red")
+                        )
+                        print(f"Balloon {i} out of bounds at turn {turn}")
+                        print(f"Balloon placed (x:{balloon.x}, y: {balloon.y} ,z:{balloon.z}) move by (x : {self.datamodel.wind_grids[balloon.z + self.trajectories[turn][i]][balloon.x][balloon.y].x}, y: {self.datamodel.wind_grids[balloon.z + self.trajectories[turn][i]][balloon.x][balloon.y].y}) with order {self.trajectories[turn][i]}")
+                        raise ValueError("Balloon moved out of bounds")
             
             # Add current positions to history after all updates
             turn_history.append([balloon.copy() for balloon in balloons]) #copy.deepcopy(balloons)
