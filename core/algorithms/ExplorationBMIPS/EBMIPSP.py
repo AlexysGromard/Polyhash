@@ -17,9 +17,9 @@ class EBMIPSP(Algorithm) :
         """
         super().__init__(data)
         
-        self.num_sonde : int = 400 # self.data.num_balloons | nb sonde envoyer pour tester des chemin
-        self.explored : list[list[int,list[int]]] = []
-        self.nb_save_sonde : int = 17 #
+        self.num_sonde : int = 20 # self.data.num_balloons
+        self.explored : list[list[int,list[int],bool]] = []
+        self.nb_save_sonde : int = 10
         
 
         
@@ -57,6 +57,7 @@ class EBMIPSP(Algorithm) :
 
         
         # Lancer les explorations en parallèle
+        ParallelExecutor._num_processes = 1
         explored_chunks = ParallelExecutor.execute_class(self, "_explore")
         print(f"end - {time.time() - start}")
 
@@ -138,16 +139,18 @@ class EBMIPSP(Algorithm) :
             self.data.updatePositionWithWind(sondes[i])
             
         # recuperer le resultat
-        res = arbitre.turn_score(sondes)
+        res = arbitre.turn_score([sondes[0]])
         
         self.explored = [[res, [1], False] for _ in range(self.num_sonde)]
         
+        #Compte le nombre de ballons perdus (debogage)
         nb_bounds = 0
         
         # On explore les sondes pendant x tours
         while cpt < self.data.turns -1 :
             # On fait un tour
             for place, sonde in enumerate(sondes):
+                #print(f"{place} -> {sonde} -> {self.explored[place]}")
                 if not self.explored[place][2] :
                 # On donne des ordres aleatoires pour chaque sondes entre (-1,0,1) mais si on touche l'alitude max ou min, on reduit les choix
                     order = generate_random_orders(sonde)
@@ -157,7 +160,7 @@ class EBMIPSP(Algorithm) :
                     
                     #nb_essaie = 0
                     if not is_in :
-                        self.explored[place][2] = not self.explored[place][2]
+                        self.explored[place][2] = True
 
                         nb_bounds += 1
                     
@@ -186,12 +189,28 @@ class EBMIPSP(Algorithm) :
         _explore_selection est la méthode qui permet de choisir la meilleure sonde parmis les sondes explorées
         """
         # Filtrer les éléments où la troisième valeur est False
-        filtered_explored = [item for item in self.explored if item[2] is False]
+        #filtered_explored = [item for item in self.explored if item[2] == False]
+        filtered_explored = []
+        cnt = 0
+        for row in self.explored:
+            _, loonPath, _2 = row
+            cnt+= 1
+            pos = self.data.starting_cell.copy()
+            ok = True
+            for altVar in loonPath:
+                pos.z += altVar
+                res = self.data.updatePositionWithWind(pos)
+                if res == False:
+                    ok = False
+                    break
+            if ok and len(loonPath) == self.data.turns:
+                filtered_explored.append(row)
+        
+        #Trier les données par la première colonne (décroissant)
+        self.explored = sorted(filtered_explored, key=lambda item: item[0], reverse=True)#[:self.nb_save_sonde + 1]
 
-        # Trier les données par la première colonne (décroissant)
-        self.explored = sorted(filtered_explored, key=lambda item: item[0], reverse=True)[:self.nb_save_sonde + 1]
 
-        #print(f'len de sonde save {len(self.explored)}')
+        print(f'len de sonde save {len(self.explored)}')
         
 
         
@@ -200,6 +219,10 @@ class EBMIPSP(Algorithm) :
         """
         creer des chaine de ballon
         """
+        
+        for i in self.explored:
+            if i[2] == True:
+                print("ta geule2")
         
         def duplicate_and_modify(lst, gap: int) -> list :
             """
@@ -221,7 +244,7 @@ class EBMIPSP(Algorithm) :
 
 
 
-        # nombre de pcaker
+        # nombre de snakes
 
         nb = self.data.num_balloons // self.nb_save_sonde
         reste = self.data.num_balloons % self.nb_save_sonde  
@@ -250,7 +273,19 @@ class EBMIPSP(Algorithm) :
         # print(f' Wath {self.trajet[-1]}')
 
         # transposé
-        self.trajet = [[row[k] for row in self.trajet] for k in range(len(self.trajet[0]))]
+        #self.trajet = [[row[k] for row in self.trajet] for k in range(len(self.trajet[0]))]
+        cnt = 0
+
+        
+        tempo = []
+        for tour in range(len(self.trajet[1])):
+            row = []
+            for loon in range(len(self.trajet)):
+                row.append(self.trajet[loon][tour])
+            tempo.append(row)
+        
+                
+        self.trajet = tempo
             
         
         
