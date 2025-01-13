@@ -63,6 +63,6 @@ if __name__ == "__main__":
     # Début du programme
     solver = Solver(args.challenge, args.output, args.display, args.displays, args.algo)   # crée une instance de Solver
     solver.run()                                                            # lance les calculs de l'algorithme
-    solver.post_process()                                                   # génère le fichier de sortie et vérifie les résultats
+    solver.post_process2()                                                   # génère le fichier de sortie et vérifie les résultats
 
     
