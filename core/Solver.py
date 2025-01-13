@@ -102,7 +102,7 @@ class Solver:
         Returns:
             int: _description_
         """
-        return self.__score_history[-1]
+        return self.__score_history[-1] #todo erreur possible 
         
     def get_score(self) -> list[int] :
         """
@@ -132,6 +132,8 @@ class Solver:
     
     
     def post_process(self) -> None:
+        """_summary_
+        """
         self.__controller()
         self.__output()
         self.__display()
@@ -140,6 +142,12 @@ class Solver:
 
 
     def __controller(self):
+        """_summary_
+
+        Raises:
+            ValueError: _description_
+            ValueError: _description_
+        """
         
         # si on ne veux pas controler
         if not self.controller :
@@ -195,6 +203,8 @@ class Solver:
             )
 
     def __output(self) -> None :
+        """_summary_
+        """
         # Export results
         output = OutputModel(
             turns=self.datamodel.turns,
@@ -205,6 +215,8 @@ class Solver:
         return
     
     def __display(self) -> None :
+        """_summary_
+        """
                 # Display results
         if self.display:
             for display_name in self.displays:
@@ -221,9 +233,51 @@ class Solver:
                     DebugPrinter.message(f"Error while rendering display '{display_name}': {e}", color="red")
 
     
-    def reset(self, algo :str) -> None:
-        self.algorithm = Algorithm.factory(algo)
-        self.trajectories = []
+    def reset(self,  path :str = None, output :str = None, controller :bool = None, algo :str = 'Mathis') -> None :
+        """_summary_
+
+        Args:
+            path (str, optional): _description_. Defaults to None.
+            output (str, optional): _description_. Defaults to None.
+            controller (bool, optional): _description_. Defaults to None.
+            algo (str, optional): _description_. Defaults to 'Mathis'.
+
+        Raises:
+            ValueError: _description_
+            ValueError: _description_
+            TypeError: _description_
+            TypeError: _description_
+        """
+        self.path = self.path if path == None else path
+        self.output = self.output if output == None else output
         
+        
+        # Vérifier si le chemin d'entrée est valide
+        if not path or not Path(path).is_file():
+            raise ValueError(f"Invalid input path: {path}")
+        
+        # Vérifier si le chemin de sortie est dans un répertoire valide
+        output_dir = Path(output).parent
+        if not output_dir.exists():
+            raise ValueError(f"Output directory does not exist: {output_dir}")
+        
+        # Vérifier si le display est un booléen
+        if type(controller) is not bool:
+            raise TypeError(f"Invalid Typage for display value: {controller}")
+
+        # verifier si l'algorithme est valide
+        if type(algo) is not str or algo == None:
+            raise TypeError(f"Invalid Typage for algorithm value: {algo}")
+        
+
+        self.controller = self.controller if controller == None else controller
+        self.algorithm = Algorithm.factory(algo)
+        
+        # reset attribut
+        self.trajectories       = []
+        self.__score_history    = []
+        self.__turn_history     = []
+        
+        # execute le solver
         self.run()
         self.post_process()
