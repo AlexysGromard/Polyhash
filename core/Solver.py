@@ -30,7 +30,7 @@ class Solver:
     """
     
     
-    def __init__(self, path :str, output :str, display :bool = False, displays :list[str] = None, algo :str = None) -> None:
+    def __init__(self, path :str, output :str, controller :bool = False, displays :list[str] = [], algo :str = 'Mathis') -> None:
         """
         Constructeur de la classe Solver
 
@@ -59,8 +59,8 @@ class Solver:
             raise ValueError(f"Output directory does not exist: {output_dir}")
         
         # Vérifier si le display est un booléen
-        if type(display) is not bool:
-            raise TypeError(f"Invalid Typage for display value: {display}")
+        if type(controller) is not bool:
+            raise TypeError(f"Invalid Typage for display value: {controller}")
         
         # Vérifier que le displays est une liste
         if type(displays) is not list:
@@ -71,29 +71,51 @@ class Solver:
                     raise TypeError(f"Invalid Typage for displays value: {display}")
         
         # verifier si l'algorithme est valide
-        if type(algo) is not str and algo != None:
+        if type(algo) is not str or algo == None:
             raise TypeError(f"Invalid Typage for algorithm value: {algo}")
         
         
-        # si aucun paramètre n'est passé pour l'algorithme, on utilise l'algorithme par défaut
-        if algo == None :
-            algo = 'Mathis'
+
         
         
         self.path           :str                = path
         self.output         :str                = output
         
-        self.display        :bool               = display
+        self.controller     :str                = controller
+        
+        self.display        :bool               = True if len(displays) != 0 else False
         self.displays       :list[str]          = displays
 
         self.trajectories   :list[list]         = []
         
         self.datamodel      :'DataModel'        = DataModel.extract_data(self.path)
-        self.algorithm      :Algorithm          = Algorithm.factory(algo, data=self.datamodel)
+        self.algorithm      : Algorithm         = Algorithm.factory(algo, data=self.datamodel)
+        
+        self.__score_history: list[int]         = []
+        self.__turn_history : list[list[Vector3]]= []
+    # GETTER
+    
+    def get_totalscore(self) -> int :
+        """
+        Score total caculer dans __validator
 
+        Returns:
+            int: _description_
+        """
+        return self.__score_history[-1]
         
-        
-        
+    def get_score(self) -> list[int] :
+        """
+        Return le score cumulatif de chaque tour
+
+        Returns:
+            list[int]: score cumulatif de chaque tour
+        """
+        return self.__score_history
+    
+    
+    # METHODE
+    
     def run(self) -> None:
         """
         Méthode run qui exécute les calculs et les traitements nécessaires pour résoudre le problème via un algorithme choisi
@@ -110,23 +132,29 @@ class Solver:
     
     
     def post_process(self) -> None:
-        """
-        Execute the solution post-process to generate output and verify results.
+        self.__controller()
+        self.__output()
+        self.__display()
+        return
 
-        Raises:
-            ValueError: If a balloon goes out of bounds.
-        """
+
+
+    def __controller(self):
+        
+        # si on ne veux pas controler
+        if not self.controller :
+            return 
+        
         # Initialize Arbitrator and balloons
         abitrator = Arbitrator(self.datamodel)
         balloons = [self.datamodel.starting_cell.copy() for _ in range(self.datamodel.num_balloons)]
+        
         DebugPrinter.debug(
             DebugPrinter.header("Solver", "post_process", DebugPrinter.STATES["run"]),
             DebugPrinter.message("Starting post_process", color="yellow"),
             DebugPrinter.variable("balloons_initial", "list[Vector3]", balloons)
         )
 
-        turn_history = []
-        score_history = []
         total_score = 0
 
         for turn in range(self.datamodel.turns):
@@ -138,45 +166,35 @@ class Solver:
             for i, balloon in enumerate(balloons):
                 # Update altitude
                 balloon.z += self.trajectories[turn][i]
-                if not (0 <= balloon.z <= self.datamodel.altitudes):
-                    raise ValueError(f"Invalid altitude for balloon {i} at turn {turn}")
 
                 # Apply wind and update position
                 is_in = self.datamodel.updatePositionWithWind(balloon)
+                
+                # if udpate is in out 
                 if not is_in:
-                    DebugPrinter.debug(
-                        DebugPrinter.message(f"Balloon {i} out of bounds at turn {turn}", color="red")
-                    )
-                    raise ValueError("Balloon moved out of bounds")
-            
-            # Add current positions to history after all updates
-            turn_history.append(copy.deepcopy(balloons))
+                    
+                    if not (0 <= balloon.z <= self.datamodel.altitudes):
+                        raise ValueError(f"Invalid altitude for balloon {i} at turn {turn}")
+                    else :
+                        DebugPrinter.debug(
+                            DebugPrinter.message(f"Balloon {i} out of bounds at turn {turn}", color="red")
+                        )
+                        raise ValueError("Balloon moved out of bounds")
+
+
+            self.__turn_history .append([ balloon.copy() for balloon in balloons])
             
             # Calculate and log score
             turn_score = abitrator.turn_score(balloons)
             total_score += turn_score
-            score_history.append(total_score)
+            self.__score_history.append(total_score)
 
             DebugPrinter.debug(
                 DebugPrinter.variable("turn_score", "int", turn_score),
                 DebugPrinter.variable("cumulative_score", "int", total_score)
             )
 
-        # Display results
-        if self.display:
-            for display_name in self.displays:
-                try:
-                    match display_name:
-                        case "simulation_2d":
-                            display = Display.register_display(display_name, Simulation2DDisplay)
-                            display = Display.create_display(display_name, self.datamodel, turn_history, score_history)
-                        case _:
-                            DebugPrinter.debug(DebugPrinter.message(f"Unknown display type '{display_name}'", color="red"))
-                            continue
-                    display.render()
-                except Exception as e:
-                    DebugPrinter.message(f"Error while rendering display '{display_name}': {e}", color="red")
-
+    def __output(self) -> None :
         # Export results
         output = OutputModel(
             turns=self.datamodel.turns,
@@ -184,4 +202,28 @@ class Solver:
             adjustments=self.trajectories
         )
         output.export_output_file(self.output)
+        return
+    
+    def __display(self) -> None :
+                # Display results
+        if self.display:
+            for display_name in self.displays:
+                try:
+                    match display_name:
+                        case "simulation_2d":
+                            display = Display.register_display(display_name, Simulation2DDisplay)
+                            display = Display.create_display(display_name, self.datamodel, self.__turn_history, self.__score_history)
+                        case _:
+                            DebugPrinter.debug(DebugPrinter.message(f"Unknown display type '{display_name}'", color="red"))
+                            continue
+                    display.render()
+                except Exception as e:
+                    DebugPrinter.message(f"Error while rendering display '{display_name}': {e}", color="red")
 
+    
+    def reset(self, algo :str) -> None:
+        self.algorithm = Algorithm.factory(algo)
+        self.trajectories = []
+        
+        self.run()
+        self.post_process()
