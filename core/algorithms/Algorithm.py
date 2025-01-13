@@ -98,5 +98,8 @@ class Algorithm(ABC):
             case "RSMT":
                 from .R_SMT.r_smt import RSMT
                 return RSMT(data)
+            case "ClusteredPath":
+                from .ClusteredPathAlgorithm.ClusteredPathAlgorithm import ClusteredPathAlgorithm
+                return ClusteredPathAlgorithm(data)
             case _:
                 raise ValueError("Algo not found")

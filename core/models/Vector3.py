@@ -88,4 +88,22 @@ class Vector3:
         """
         return Vector3(self.x, self.y, self.z)
     
+    #Compare (greater than) two Vector3 objects
+    def __gt__(self, other: "Vector3") -> bool:
+        """
+        Compares two Vector3 objects.
+
+        Parameters:
+            other (Vector3): The other Vector3 object to compare.
+
+        Returns:
+            bool: True if the first Vector3 object is greater than the second, False otherwise.
+        """
+        if isinstance(other, Vector3):
+            return self.x > other.x and self.y > other.y
+        return NotImplemented
+    
+
+
+    
     
