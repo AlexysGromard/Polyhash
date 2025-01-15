@@ -76,7 +76,7 @@ class Arbitrator:
                 u (int): The row of the balloon.
                 v (int): The column of the balloon.
                 coverage_radius (int): The coverage radius of the balloon.
-            
+
             Returns:
                 bool: True if the target is covered by the balloon, False otherwise.
             '''
@@ -85,7 +85,7 @@ class Arbitrator:
         # Check if all arguments are provided correctly
         if not balloons or not self.target_cells or self.coverage_radius < 0:
             raise TypeError("Invalid arguments.")
-        
+
         # Pre-calculate constants
         coverage_radius_sq = self.coverage_radius ** 2
         grid_width = self.get_grid_size()[1]
@@ -97,13 +97,10 @@ class Arbitrator:
             # Get radius
             u, v = target.x, target.y # Target coordinates
             for balloon in balloons:
-                # Check if the balloon altitude is not 0
-                if balloon.z == 0:
-                    break
-                # Check if the target is covered by the balloon
-                if is_covered(balloon.x, balloon.y, u, v):
+                # Check if the target is covered by the balloon and the balloon is not at the ground
+                if is_covered(balloon.x, balloon.y, u, v) and balloon.z != 0:
                     if debug:
-                        print(f"Balloon at ({r}, {c}) covers target at ({u}, {v})")
+                        print(f"Balloon at ({balloon.x}, {balloon.y}) covers target at ({u}, {v})")
                     score += 1
                     break
         return score
