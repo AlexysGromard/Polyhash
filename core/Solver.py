@@ -37,7 +37,7 @@ class Solver:
         Args:
             path (str): Chemin du fichier d'entrée des données
             output (str): Chemin du fichier de sortie des données
-            display (bool, optional): active ou désactive l'affichage. Defaults to False.
+            controller (bool, optional): active ou désactive la verrification des chemins. Defaults to False.
             displays (list[str], optional): Liste des noms des displays à utiliser. Defaults to None.
             algo (str, optional): Algorithme à utiliser. Defaults to None.
 
@@ -100,9 +100,9 @@ class Solver:
         Score total caculer dans __validator
 
         Returns:
-            int: _description_
+            int: returne -1 si la liste est vide ou bien return le resultat max de la liste
         """
-        return self.__score_history[-1] #todo erreur possible 
+        return self.__score_history[-1] if len(self.__score_history) != 0 else -1
         
     def get_score(self) -> list[int] :
         """
@@ -142,11 +142,12 @@ class Solver:
 
 
     def __controller(self):
-        """_summary_
+        """
+        Methode qui verifie et recalculer les resultats via l'arbitre et les trajectoire donner
 
         Raises:
-            ValueError: _description_
-            ValueError: _description_
+            ValueError: Invalid altitude for balloon x at turn k
+            ValueError: Balloon moved out of bounds
         """
         
         # si on ne veux pas controler
@@ -203,7 +204,8 @@ class Solver:
             )
 
     def __output(self) -> None :
-        """_summary_
+        """
+        method qui permet de realiser la sortie des donnees sur le txt
         """
         # Export results
         output = OutputModel(
@@ -215,38 +217,43 @@ class Solver:
         return
     
     def __display(self) -> None :
-        """_summary_
         """
-                # Display results
-        if self.display:
+        execute l'affichage selectionner en paramettre de l'attribut 
+        """
+        # Display results
+        if self.display and self.controller :
             for display_name in self.displays:
                 try:
                     match display_name:
                         case "simulation_2d":
                             display = Display.register_display(display_name, Simulation2DDisplay)
                             display = Display.create_display(display_name, self.datamodel, self.__turn_history, self.__score_history)
+                            display.render()
                         case _:
                             DebugPrinter.debug(DebugPrinter.message(f"Unknown display type '{display_name}'", color="red"))
-                            continue
-                    display.render()
+                            
+                    
                 except Exception as e:
                     DebugPrinter.message(f"Error while rendering display '{display_name}': {e}", color="red")
+        return
 
     
     def reset(self,  path :str = None, output :str = None, controller :bool = None, algo :str = 'Mathis') -> None :
-        """_summary_
+        """
+        reset l'ensemble du solver et le reexecute
 
         Args:
-            path (str, optional): _description_. Defaults to None.
-            output (str, optional): _description_. Defaults to None.
-            controller (bool, optional): _description_. Defaults to None.
-            algo (str, optional): _description_. Defaults to 'Mathis'.
+            path (str): Chemin du fichier d'entrée des données
+            output (str): Chemin du fichier de sortie des données
+            controller (bool, optional): active ou désactive la verification des chemins. Defaults to False.
+            displays (list[str], optional): Liste des noms des displays à utiliser. Defaults to None.
+            algo (str, optional): Algorithme à utiliser. Defaults to None.
 
         Raises:
-            ValueError: _description_
-            ValueError: _description_
-            TypeError: _description_
-            TypeError: _description_
+            ValueError: Invalid input path
+            ValueError: Output directory does not exist
+            TypeError: Invalid Typage for display value
+            TypeError: Invalid Typage for algorithm value
         """
         self.path = self.path if path == None else path
         self.output = self.output if output == None else output
