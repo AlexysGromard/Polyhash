@@ -35,7 +35,7 @@ if __name__ == "__main__":
                         metavar="sortie.txt")
     
     # recupere param -display pour spécifier si on affiche ou pas    
-    parser.add_argument('-display', action='store_true', default=False,
+    parser.add_argument('-controller', action='store_true', default=False,
                         help='Boolean to display or not (default: False)')
     
     # recupere param -displays pour spécifier les noms des displays à utiliser
@@ -61,7 +61,7 @@ if __name__ == "__main__":
         
 
     # Début du programme
-    solver = Solver(args.challenge, args.output, args.display, args.displays, args.algo)   # crée une instance de Solver
+    solver = Solver(args.challenge, args.output, args.controller, args.displays, args.algo)   # crée une instance de Solver
     solver.run()                                                            # lance les calculs de l'algorithme
     solver.post_process()                                                   # génère le fichier de sortie et vérifie les résultats
 
