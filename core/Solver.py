@@ -69,13 +69,16 @@ class Solver:
             for display in displays:
                 if type(display) is not str:
                     raise TypeError(f"Invalid Typage for displays value: {display}")
-        
+        if algo == None :
+            # valeur par default
+            algo = "Mathis"
         # verifier si l'algorithme est valide
-        if type(algo) is not str or algo == None:
+        elif type(algo) is not str :
             raise TypeError(f"Invalid Typage for algorithm value: {algo}")
         
         
-
+        
+    
         
         
         self.path           :str                = path
@@ -213,7 +216,13 @@ class Solver:
             num_balloons=self.datamodel.num_balloons,
             adjustments=self.trajectories
         )
-        output.export_output_file(self.output)
+        
+        # Séparer le chemin et l'extension .txt
+        chemin, extension = self.output.rsplit('.', 1)
+        path_output = f"{chemin}_{self.get_totalscore()}_{self.path.split('/')[-1].split('.')[0]}.{extension}"# ajout du score dans le nom du fichier
+        
+        # creation du fichier
+        output.export_output_file(path_output) 
         return
     
     def __display(self) -> None :
