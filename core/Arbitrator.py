@@ -40,6 +40,37 @@ class Arbitrator:
             self.coverage_map: list[list[int]] = [[0 for _ in range(width)] for _ in range(height)]
         else:
             raise ValueError(f"Invalid grid size: height={height}, width={width}. Both must be > 0.")
+    
+    def columndist(self, c1, c2) -> int:
+        '''
+        The function to calculate the distance between two columns.
+
+        Args:
+            c1 (int): The first column. 
+            c2 (int): The second column.
+            grid_width (int): The width of the grid.
+
+        Returns:
+            int: The distance between two columns.
+        '''
+        return min(abs(c1 - c2), self.get_grid_size()[1] - abs(c1 - c2))
+
+    def is_covered(self, r, c, u, v) -> bool:
+        '''
+        The function to check if the target is covered by the balloon.
+
+        Args:
+            r (int): The row of the target.
+            c (int): The column of the target.
+            u (int): The row of the balloon.
+            v (int): The column of the balloon.
+            coverage_radius (int): The coverage radius of the balloon.
+
+        Returns:
+            bool: True if the target is covered by the balloon, False otherwise.
+        '''
+        return (r - u) ** 2 + self.columndist(c, v) ** 2 <= self.coverage_radius ** 2
+
 
     def turn_score(self, balloons: list[Vector3], debug: bool = False) -> int:
         '''
@@ -52,43 +83,10 @@ class Arbitrator:
         Returns:
             int: The score of the solution.
         '''
-        def columndist(c1, c2) -> int:
-            '''
-            The function to calculate the distance between two columns.
-
-            Args:
-                c1 (int): The first column. 
-                c2 (int): The second column.
-                grid_width (int): The width of the grid.
-
-            Returns:
-                int: The distance between two columns.
-            '''
-            return min(abs(c1 - c2), grid_width - abs(c1 - c2))
-
-        def is_covered(r, c, u, v) -> bool:
-            '''
-            The function to check if the target is covered by the balloon.
-
-            Args:
-                r (int): The row of the target.
-                c (int): The column of the target.
-                u (int): The row of the balloon.
-                v (int): The column of the balloon.
-                coverage_radius (int): The coverage radius of the balloon.
-
-            Returns:
-                bool: True if the target is covered by the balloon, False otherwise.
-            '''
-            return (r - u) ** 2 + columndist(c, v) ** 2 <= coverage_radius_sq
 
         # Check if all arguments are provided correctly
         if not balloons or not self.target_cells or self.coverage_radius < 0:
             raise TypeError("Invalid arguments.")
-
-        # Pre-calculate constants
-        coverage_radius_sq = self.coverage_radius ** 2
-        grid_width = self.get_grid_size()[1]
 
         score = 0
 
@@ -98,11 +96,28 @@ class Arbitrator:
             u, v = target.x, target.y # Target coordinates
             for balloon in balloons:
                 # Check if the target is covered by the balloon and the balloon is not at the ground
-                if is_covered(balloon.x, balloon.y, u, v) and balloon.z != 0:
+                if self.is_covered(balloon.x, balloon.y, u, v) and balloon.z != 0:
                     if debug:
                         print(f"Balloon at ({balloon.x}, {balloon.y}) covers target at ({u}, {v})")
                     score += 1
                     break
+        return score
+
+    def score_for_ballon(self, balloon: Vector3) -> int:
+        '''
+        The function to count the score of a solution for one balloon.
+
+        Args:
+            balloon (Vector3): The balloon. Vector3(x, y) where x is the row and y is the column.
+
+        Returns:
+            int: The score of the solution.
+        '''
+        score = 0
+        for target in self.target_cells:
+            u, v = target.x, target.y
+            if self.is_covered(balloon.x, balloon.y, u, v) and balloon.z != 0:
+                score += 1
         return score
 
     def print_coverage_map(self):
