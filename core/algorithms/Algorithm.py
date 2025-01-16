@@ -98,5 +98,8 @@ class Algorithm(ABC):
             case "RSMT":
                 from .R_SMT.r_smt import RSMT
                 return RSMT(data)
+            case "RSMTv3":
+                from .R_SMT.r_smt_v3 import RSMTv3
+                return RSMTv3(data)
             case _:
                 raise ValueError("Algo not found")
