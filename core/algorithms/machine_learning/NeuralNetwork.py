@@ -47,7 +47,7 @@ class NeuralNetwork:
         # Initialisation des poids
         self.weights_input_hidden = [[random.uniform(-1, 1) for _ in range(hidden_size)] for _ in range(input_size)]
         self.weights_hidden_output = [[random.uniform(-1, 1) for _ in range(output_size)] for _ in range(hidden_size)]
-        
+
         # Initialisation des biais
         self.bias_hidden = [random.uniform(-1, 1) for _ in range(hidden_size)]
         self.bias_output = [random.uniform(-1, 1) for _ in range(output_size)]
@@ -130,34 +130,36 @@ class NeuralNetwork:
             inputs = training_data[0][0]
 
             for i in range(data_model.turns):
+                print(f"Turn {i + 1}")
                 # print(f"Inputs: {inputs}")
                 # 1. Calculer les prédictions du réseau de neurones
                 self.feedforward(inputs)
                 predict = self.output_layer
 
                 # 2. Construire la liste des nouvelles positions des ballons prédites par le réseau
-                predicted_positions = [
-                    Vector3(
-                        int(predict[i * 3]),  # Coordonnée X
-                        int(predict[i * 3 + 1]),  # Coordonnée Y
-                        constrain_altitude(predict[i * 3 + 2], hauteur_max)  # Coordonnée Z contrainte
-                    ) for i in range(len(predict) // 3)
-                ]
+                predicted_altitudes = [constrain_altitude(predict[i * 3], hauteur_max) for i in range(data_model.num_balloons)]
 
                 # 3. Mettre à jour les positions des ballons en appliquant l'effet du vent
-                for i, balloon in enumerate(predicted_positions):
-                    # print(f"old position: {balloon}")
-                    data_model.updatePositionWithWind(balloon)
-                    # print(f"new position: {balloon}")
+                for i in range(data_model.num_balloons):
+                    print(f"Position ballon {i + 1}: {inputs[i * 3]}, {inputs[i * 3 + 1]}, {inputs[i * 3 + 2]}")
+                    inputs[i * 3 + 2] = predicted_altitudes[i]
+                    # Créer un objet Vector3 pour chaque ballon avec les nouvelles coordonnées
+                    balloon = Vector3(inputs[i * 3], inputs[i * 3 + 1], inputs[i * 3 + 2])
 
+                    # Mettre à jour la position du ballon en fonction du vent
+                    data_model.updatePositionWithWind(balloon)
+
+                    # Mettre à jour les coordonnées du ballon dans la liste des inputs
                     inputs[i * 3] = balloon.x
                     inputs[i * 3 + 1] = balloon.y
                     inputs[i * 3 + 2] = balloon.z
+                    print(f"Nouvelle position ballon {i + 1}: {inputs[i * 3]}, {inputs[i * 3 + 1]}, {inputs[i * 3 + 2]}")
 
 
                 # 5. Calculer le score basé sur les positions mises à jour
-                score = self.arbitrator.turn_score(predicted_positions)
-                print(f"The score is {score}")
+                input_for_arbitrator = [Vector3(inputs[i * 3], inputs[i * 3 + 1], inputs[i * 3 + 2]) for i in range(data_model.num_balloons)]
+                score = self.arbitrator.turn_score(input_for_arbitrator)
+                # print(f"The score is {score}")
 
                 total_score += score
 
