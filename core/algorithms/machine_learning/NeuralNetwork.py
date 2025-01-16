@@ -29,7 +29,7 @@ class NeuralNetwork:
         # Propagation avant : calculer la sortie du réseau
         hidden_layer = [sum(inputs[i] * self.weights_input_hidden[j][i] for i in range(self.input_size))
                         for j in range(self.hidden_size)]
-        
+
         # Appliquer une activation (par exemple, sigmoïde)
         self.output_layer = [1 / (1 + exp(-x)) for x in hidden_layer]  # Sigmoïde
         return self.output_layer
@@ -100,8 +100,8 @@ class NeuralNetwork:
                 total_loss += loss
 
             # Afficher la perte totale et le score moyen pour l'epoch
-            avg_score = total_score / len(training_data)
-            print(f"Epoch {epoch + 1}/{epochs}, Loss: {total_loss}, Avg Score: {avg_score}")
+    
+            print(f"Epoch {epoch + 1}/{epochs}, Loss: {total_loss}, total_score: {total_score}")
 
     def predict(self, data_model, inputs):
         # Donner pour chaque tour la meilleure altitude pour chaque ballon
