@@ -46,7 +46,6 @@ class Simulation2DDisplay(Display):
         )
         fig.add_trace(targets_trace)
 
-
         initial_score_annotation = go.layout.Annotation(
             text="Score: 0",
             xref="paper",
@@ -75,10 +74,23 @@ class Simulation2DDisplay(Display):
             ) for _ in range(self.data_model.num_balloons)
         ]
 
+        initial_annotations = [
+            go.layout.Annotation(
+                text=f"Alt: {self.balloon_positions[0][i].z}",
+                x=starting_y,
+                y=starting_x,
+                showarrow=False,
+                font=dict(size=12, color="black"),
+                bgcolor="white",
+                bordercolor="black",
+                borderwidth=1
+            ) for i in range(self.data_model.num_balloons)
+        ]
+
         frames.append(go.Frame(
             data=[targets_trace],
             name="0",
-            layout=go.Layout(annotations=[initial_score_annotation], shapes=initial_shapes)
+            layout=go.Layout(annotations=[initial_score_annotation] + initial_annotations, shapes=initial_shapes)
         ))
 
         # Generate frames for each turn
@@ -86,8 +98,9 @@ class Simulation2DDisplay(Display):
             frame_data = [targets_trace]  # Always include targets 
             current_positions = self.balloon_positions[turn]
             shapes = []
+            annotations = []
 
-            for balloon in current_positions:
+            for i, balloon in enumerate(current_positions):
                 # Add coverage circle as a shape
                 shapes.append(dict(
                     type="circle",
@@ -99,6 +112,18 @@ class Simulation2DDisplay(Display):
                     y1=balloon.x + radius,
                     fillcolor=f'rgba(0, 200, 200, 0.2)',
                     line=dict(color='rgba(0, 0, 255, 1)', width=2)
+                ))
+
+                # Add altitude annotation
+                annotations.append(go.layout.Annotation(
+                    text=f"Alt: {balloon.z}",
+                    x=balloon.y,
+                    y=balloon.x,
+                    showarrow=False,
+                    font=dict(size=12, color="black"),
+                    bgcolor="white",
+                    bordercolor="black",
+                    borderwidth=1
                 ))
 
             # Create annotation for the score
@@ -119,7 +144,7 @@ class Simulation2DDisplay(Display):
             frames.append(go.Frame(
                 data=frame_data,
                 name=str(turn + 1),
-                layout=go.Layout(annotations=[score_annotation], shapes=shapes)
+                layout=go.Layout(annotations=[score_annotation] + annotations, shapes=shapes)
             ))
 
         # Add frames to the figure

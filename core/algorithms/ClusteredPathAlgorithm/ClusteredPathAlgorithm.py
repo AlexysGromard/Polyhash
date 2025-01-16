@@ -23,7 +23,7 @@ class ClusteredPathAlgorithm(Algorithm):
         data (DataModel): The input data for the algorithm.
         clusters (list[Cluster]): The clusters of targets.
         trajet (list[list[int]]): The trajectory of each balloon.
-    
+
     Methods:
         _distance: Calculate distance between two points considering cyclic grid.
         _create_clusters: Partition targets into clusters based on coverage radius.
@@ -43,100 +43,117 @@ class ClusteredPathAlgorithm(Algorithm):
         dy = min(abs(pos1.y - pos2.y), self.data.cols - abs(pos1.y - pos2.y))
         return math.sqrt(dx * dx + dy * dy)
 
-    def _create_clusters(self, max_radius : int, min_size : int) -> None:
-        """Partition targets into clusters based on coverage radius"""
-        unclustered = self.data.target_cells.copy()
+    def _create_clusters_knn(self, k: int = 5) -> None:
+        # Initialize some random centers using K-means++
+        centers = random.sample(self.data.target_cells, 1)
+        while len(centers) < k:
+            d_squared = []
+            # Calculate the distance squared from each target to the nearest center
+            for t in self.data.target_cells:
+                d_squared.append(min((t.x - c.x) ** 2 + (t.y - c.y) ** 2 for c in centers))
+            d_squared_sum = sum(d_squared)
+            # Calculate the probability of each target being chosen as the next center
+            probabilities = [d / d_squared_sum for d in d_squared]
+            new_center = random.choices(self.data.target_cells, probabilities)[0]
+            centers.append(new_center)
 
-        while unclustered:
-            current = unclustered[0]
-            cluster_targets = [current]
+        # Initialize empty clusters
+        clusters = [[] for _ in range(k)]
 
-            # Find all targets within coverage radius
-            for target in unclustered[1:]:
-                if self._distance(current, target) <= max_radius * 2:
-                    cluster_targets.append(target)
+        # Re-assign clusters until stable (fixed iterations for simplicity)
+        for _ in range(100):
+            for c in clusters:
+                c.clear()
+            # Assign each target to the closest center
+            for t in self.data.target_cells:
+                closest_idx = min(range(k), key=lambda i: (centers[i].x - t.x) ** 2 + (centers[i].y - t.y) ** 2)
+                clusters[closest_idx].append(t)
+            # Update centers to be the average of assigned targets
+            for i in range(k):
+                if clusters[i]:
+                    avg_x = sum(p.x for p in clusters[i]) / len(clusters[i])
+                    avg_y = sum(p.y for p in clusters[i]) / len(clusters[i])
+                    centers[i] = Vector3(int(avg_x), int(avg_y))
 
-            # Calculate cluster center
-            center_x = sum(t.x for t in cluster_targets) / len(cluster_targets)
-            center_y = sum(t.y for t in cluster_targets) / len(cluster_targets)
-            center = Vector3(int(center_x), int(center_y), 0)
+        # Store clusters in the algorithm's state
+        self.clusters = []
+        for i, c in enumerate(clusters):
+            if len(c) > 50: # Ignore small clusters
+                self.clusters.append(Cluster(center=centers[i], targets=c))
 
-            # Create new cluster
-            if len(cluster_targets) >= min_size:
-                self.clusters.append(Cluster(center, cluster_targets))
-
-            # Remove clustered targets from unclustered list
-            for target in cluster_targets:
-                unclustered.remove(target)
-
-        # Print cluster information
+        # Print cluster information for debugging
         print(f"\nCreated {len(self.clusters)} clusters:")
         for i, cluster in enumerate(self.clusters):
             print(f"Cluster {i}: {cluster}")
 
     def _a_star_pathfinding(self, start: Vector3, goal: Vector3) -> list[int]:
-            """
-            Adaptation of A* algorithm to find the shortest path based on wind vectors.
+        """
+        Adaptation of A* algorithm to find the shortest path based on wind vectors.
 
-            Args:
-                start (Vector3): Starting position.
-                goal (Vector3): Target position.
+        Args:
+            start (Vector3): Starting position.
+            goal (Vector3): Target position.
 
-            Returns:
-                list[int]: Altitude changes (-1, 0, +1) to navigate from start to goal.
-            """
+        Returns:
+            list[int]: Altitude changes (-1, 0, +1) to navigate from start to goal.
+        """
 
+        # Priority queue to hold the open set of nodes to be evaluated
+        open_set = []
+        # Push the starting position into the priority queue with initial cost 0
+        heappush(open_set, (0, start.z, start, []))  # (cost, altitude, position, path)
 
-            def heuristic(pos1: Vector3, pos2: Vector3) -> float:
-                dx = abs(pos1.x - pos2.x)
-                dy = min(abs(pos1.y - pos2.y), self.data.cols - abs(pos1.y - pos2.y))
-                return dx + dy
+        # Set to hold the visited nodes
+        visited = set()
 
-            open_set = []
-            heappush(open_set, (0, start.z, start, []))  # (cost, altitude, position, path)
-            
-            visited = set()
+        while open_set:
+            # Pop the node with the lowest cost from the priority queue
+            cost, altitude, current, path = heappop(open_set)
 
-            while open_set:
-                cost, altitude, current, path = heappop(open_set)
+            # If the node has already been visited, skip it
+            if (current.x, current.y, altitude) in visited:
+                continue
+            # Mark the node as visited
+            visited.add((current.x, current.y, altitude))
 
-                if (current.x, current.y, altitude) in visited:
+            # If the goal is reached, return the path
+            if current.x == goal.x and current.y == goal.y:
+                return path
+
+            # Generate neighbors by changing the altitude
+            for delta_z in [-1, 0, 1]:
+                new_altitude = altitude + delta_z
+                # Ensure the new altitude is within the valid range
+                if not (1 <= new_altitude <= self.data.altitudes):
                     continue
-                visited.add((current.x, current.y, altitude))
 
-                # If the goal is reached
-                if current.x == goal.x and current.y == goal.y:
-                    return path
+                # Get the wind vector at the current position and new altitude
+                wind = self.data.wind_grids[new_altitude - 1][current.x][current.y]
+                new_x = current.x + wind.x
+                new_y = (current.y + wind.y) % self.data.cols
 
-                # Generate neighbors
-                for delta_z in [-1, 0, 1]:
-                    new_altitude = altitude + delta_z
-                    if not (1 <= new_altitude <= self.data.altitudes):
-                        continue
+                # Ensure the balloon stays within bounds vertically
+                if not (0 <= new_x < self.data.rows):
+                    continue
 
-                    wind = self.data.wind_grids[new_altitude - 1][current.x][current.y]
-                    new_x = current.x + wind.x
-                    new_y = (current.y + wind.y) % self.data.cols
+                # Create the neighbor node
+                neighbor = Vector3(new_x, new_y, new_altitude)
+                new_path = path + [delta_z]
+                # Calculate the new cost as the sum of the current cost, the step cost (1), and the heuristic
+                new_cost = cost + 1 + self._distance(neighbor, goal)
 
-                    # Ensure the balloon stays within bounds vertically
-                    if not (0 <= new_x < self.data.rows):
-                        continue
+                # Push the neighbor node into the priority queue
+                heappush(open_set, (new_cost, new_altitude, neighbor, new_path))
 
-                    neighbor = Vector3(new_x, new_y, new_altitude)
-                    new_path = path + [delta_z]
-                    new_cost = cost + 1 + heuristic(neighbor, goal)
-
-                    heappush(open_set, (new_cost, new_altitude, neighbor, new_path))
-
-            # If the goal is unreachable
-            return []
-
+        # If the goal is unreachable, return an empty path
+        return []
 
     def _convert_data(self) -> None:
         """Convert input data into clusters and initialize distances"""
-        self._create_clusters(self.data.coverage_radius, 1)
+        self._create_clusters_knn(6)
 
     def _process(self) -> None:
+        astar_execution = 0
         """
         Process the clusters and assign balloons to maximize coverage while avoiding overlap.
         Implements a dynamic assignment strategy where balloons are guided between clusters.
@@ -159,8 +176,7 @@ class ClusteredPathAlgorithm(Algorithm):
         for i in range(self.data.num_balloons):
             balloon_assignments.append({
                 'balloon_id': i,
-                'current_cluster': None,
-                'next_cluster': None,
+                'target_cluster': None,
                 'path': [],
                 'turns_in_cluster': 0
             })
@@ -173,30 +189,32 @@ class ClusteredPathAlgorithm(Algorithm):
                 current_pos = balloon_positions[balloon_id]
 
                 # If balloon has no path or has reached its destination
-                if not assignment['path']:
-                    if assignment['next_cluster'] is None:
+                if assignment['target_cluster'] is None:
                         # Find next best cluster to target
                         best_cluster = None
                         best_score = float('-inf')
 
+                        # Check if the cluster is already targeted by another balloon
                         for cluster in sorted_clusters:
-                            if any((a['next_cluster'] == cluster or a['current_cluster'] == cluster) and a['turns_in_cluster'] < 5 for a in balloon_assignments if a != assignment):
+                            if any(a['target_cluster'] == cluster and a['turns_in_cluster'] < 7 for a in balloon_assignments if a != assignment):
                                 continue
 
                             score = len(cluster.targets) / (1 + self._distance(current_pos, cluster.center))
                             if score > best_score:
                                 best_score = score
                                 best_cluster = cluster
-
+                        # Assign the best cluster to the balloon and calculate path
                         if best_cluster:
-                            assignment['next_cluster'] = best_cluster
+                            print(f"Balloon {balloon_id} assigned to cluster at ({best_cluster.center.x}, {best_cluster.center.y})")
+                            assignment['target_cluster'] = best_cluster
+                            astar_execution += 1
                             assignment['path'] = self._a_star_pathfinding(
                                 current_pos,
                                 Vector3(best_cluster.center.x, best_cluster.center.y, current_pos.z)
                             )
 
                 # Execute next move if we have a path
-                if assignment['path']:
+                if len(assignment['path']) > 0:
                     altitude_change = assignment['path'].pop(0)
                     self.trajet[turn][balloon_id] = altitude_change
 
@@ -209,16 +227,9 @@ class ClusteredPathAlgorithm(Algorithm):
                         print(f"Balloon {balloon_id} went out of bounds at {new_pos}")
 
                 else:
-                    self.trajet[turn][balloon_id] = 0
-                    #print(f"Balloon {balloon_id} has no path")
-
-                # Update cluster assignment if reached destination
-                if assignment['next_cluster'] and \
-                        self._distance(current_pos, assignment['next_cluster'].center) <= self.data.coverage_radius:
-                    assignment['current_cluster'] = assignment['next_cluster']
-                    assignment['next_cluster'] = None
+                    assignment['target_cluster'] = None
                     assignment['turns_in_cluster'] = 0
-  
+        print(f"A* executed {astar_execution} times")
 
     def compute(self) -> list[list[int]]:
         """
