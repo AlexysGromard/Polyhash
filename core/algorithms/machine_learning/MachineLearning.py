@@ -58,9 +58,9 @@ class MachineLearning(Algorithm):
 
         # Données d'entraînement simulées
         training_data = [(inputs, outputs) for _ in range(1000)] # 1000 = nombre d'itérations
-        nn.train(self.data, training_data, epochs=1000, learning_rate=0.1, hauteur_max=self.data.altitudes)
+        nn.train(self.data, training_data, epochs=1000, learning_rate=0.5, hauteur_max=self.data.altitudes)
 
         # Prédiction
-        predictions = nn.predict(inputs)
+        predictions = nn.predict(self.data, inputs)
         print(f"Predictions: {predictions}")
         return predictions

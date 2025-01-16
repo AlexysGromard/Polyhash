@@ -1,113 +1,53 @@
 # NeuralNetwork.py
 import random
-import math
+from math import exp
 
 from core.models import DataModel, Vector3
 from core import Arbitrator
 
-def sigmoid(x: float) -> float:
-    '''
-    Fonction sigmoïde
+def constrain_altitude(raw_value, hauteur_max):
+    """Contraint la valeur d'altitude entre 1 et hauteur_max."""
+    return int(1 + raw_value * (hauteur_max))
 
-    Args:
-        x (float): valeur à évaluer
-    '''
-    return 1 / (1 + math.exp(-x))
-
-# Dérivée de la sigmoïde
-def sigmoid_derivative(x: float) -> float:
-    '''
-    Dérivée de la fonction sigmoïde
-
-    Args:
-        x (float): valeur à évaluer
-    '''
-    return x * (1 - x)
 
 class NeuralNetwork:
-    '''
-    Réseau de neurones simple
-
-    Attributes:
-        input_size (int): taille de la couche d'entrée
-        hidden_size (int): taille de la couche cachée
-        output_size (int): taille de la couche de sortie
-
-        weights_input_hidden (list[list[float]]): poids entre la couche d'entrée et la couche cachée
-        weights_hidden_output (list[list[float]]): poids entre la couche cachée et la couche de sortie
-
-        bias_hidden (list[float]): biais de la couche cachée
-        bias_output (list[float]): biais de la couche de sortie
-    '''
-    def __init__(self, input_size, hidden_size, output_size, arbitrator: Arbitrator) -> None:
+    def __init__(self, input_size, hidden_size, output_size, arbitrator):
         self.input_size = input_size
         self.hidden_size = hidden_size
         self.output_size = output_size
-
-        # Initialisation des poids
-        self.weights_input_hidden = [[random.uniform(-1, 1) for _ in range(hidden_size)] for _ in range(input_size)]
-        self.weights_hidden_output = [[random.uniform(-1, 1) for _ in range(output_size)] for _ in range(hidden_size)]
-
-        # Initialisation des biais
-        self.bias_hidden = [random.uniform(-1, 1) for _ in range(hidden_size)]
-        self.bias_output = [random.uniform(-1, 1) for _ in range(output_size)]
+        self.weights_input_hidden = self.initialize_weights(input_size, hidden_size)
+        self.weights_hidden_output = self.initialize_weights(hidden_size, output_size)
+        self.output_layer = [0] * output_size
 
         self.arbitrator = arbitrator
 
+    def initialize_weights(self, input_size, output_size):
+        # Initialisation aléatoire des poids
+        return [[random.random() for _ in range(input_size)] for _ in range(output_size)]
+
     def feedforward(self, inputs):
-        '''
-        Calcul des valeurs pour les couches cachées et de sortie
-
-        Args:
-            inputs (list[float]): valeurs d'entrée
-
-        Returns:
-            list[float]: valeurs de sortie
-        '''
-        self.hidden_layer = [0] * self.hidden_size
-        for i in range(self.hidden_size):
-            self.hidden_layer[i] = sum(inputs[j] * self.weights_input_hidden[j][i] for j in range(self.input_size)) + self.bias_hidden[i]
-            self.hidden_layer[i] = sigmoid(self.hidden_layer[i])
+        # Propagation avant : calculer la sortie du réseau
+        hidden_layer = [sum(inputs[i] * self.weights_input_hidden[j][i] for i in range(self.input_size))
+                        for j in range(self.hidden_size)]
         
-        # Calcul des valeurs pour la couche de sortie
-        self.output_layer = [0] * self.output_size
-        for i in range(self.output_size):
-            self.output_layer[i] = sum(self.hidden_layer[j] * self.weights_hidden_output[j][i] for j in range(self.hidden_size)) + self.bias_output[i]
-            self.output_layer[i] = sigmoid(self.output_layer[i])
-
+        # Appliquer une activation (par exemple, sigmoïde)
+        self.output_layer = [1 / (1 + exp(-x)) for x in hidden_layer]  # Sigmoïde
         return self.output_layer
 
-    def backpropagate(self, inputs, expected_output, learning_rate):
-        '''
-        Rétropropagation du gradient
+    def backpropagate(self, inputs, reward, learning_rate=0.01):
+        # Mise à jour des poids en fonction de la récompense
+        output_errors = [reward - output for output in self.output_layer]  # Erreur par rapport à la récompense
 
-        Args:
-            inputs (list[float]): valeurs d'entrée
-            expected_output (list[float]): valeurs de sortie attendues
-            learning_rate (float): taux d'apprentissage
-        '''
-        # Calcul de l'erreur
-        output_errors = [expected_output[i] - self.output_layer[i] for i in range(self.output_size)]
-        hidden_errors = [0] * self.hidden_size
-        for i in range(self.hidden_size):
-            hidden_errors[i] = sum(output_errors[j] * self.weights_hidden_output[i][j] for j in range(self.output_size))
-
-        # Mise à jour des poids et des biais
-        for i in range(self.hidden_size):
-            for j in range(self.output_size):
-                self.weights_hidden_output[i][j] += learning_rate * output_errors[j] * sigmoid_derivative(self.output_layer[j]) * self.hidden_layer[i]
-
-        for i in range(self.input_size):
-            for j in range(self.hidden_size):
-                self.weights_input_hidden[i][j] += learning_rate * hidden_errors[j] * sigmoid_derivative(self.hidden_layer[j]) * inputs[i]
-
+        # Calcul des gradients et ajustement des poids
         for i in range(self.output_size):
-            self.bias_output[i] += learning_rate * output_errors[i] * sigmoid_derivative(self.output_layer[i])
+            for j in range(self.hidden_size):
+                self.weights_hidden_output[i][j] += learning_rate * output_errors[i] * self.output_layer[j]
 
         for i in range(self.hidden_size):
-            self.bias_hidden[i] += learning_rate * hidden_errors[i] * sigmoid_derivative(self.hidden_layer[i])
+            for j in range(self.input_size):
+                self.weights_input_hidden[i][j] += learning_rate * output_errors[i] * inputs[j]
 
-    def train(self, data_model: DataModel, training_data, epochs, learning_rate, hauteur_max):
+    def train(self, data_model, training_data, epochs, learning_rate, hauteur_max):
         """
         Entraînement du réseau de neurones.
 
@@ -118,10 +58,6 @@ class NeuralNetwork:
             learning_rate (float): Taux d'apprentissage.
             hauteur_max (int): Hauteur maximale de la carte.
         """
-        def constrain_altitude(raw_value, hauteur_max):
-            """Contraint la valeur d'altitude entre 1 et hauteur_max."""
-            return int(1 + raw_value * (hauteur_max - 1))
-
         for epoch in range(epochs):
             total_loss = 0
             total_score = 0  # Score total pour calculer la moyenne
@@ -130,8 +66,6 @@ class NeuralNetwork:
             inputs = training_data[0][0]
 
             for i in range(data_model.turns):
-                print(f"Turn {i + 1}")
-                # print(f"Inputs: {inputs}")
                 # 1. Calculer les prédictions du réseau de neurones
                 self.feedforward(inputs)
                 predict = self.output_layer
@@ -141,7 +75,6 @@ class NeuralNetwork:
 
                 # 3. Mettre à jour les positions des ballons en appliquant l'effet du vent
                 for i in range(data_model.num_balloons):
-                    print(f"Position ballon {i + 1}: {inputs[i * 3]}, {inputs[i * 3 + 1]}, {inputs[i * 3 + 2]}")
                     inputs[i * 3 + 2] = predicted_altitudes[i]
                     # Créer un objet Vector3 pour chaque ballon avec les nouvelles coordonnées
                     balloon = Vector3(inputs[i * 3], inputs[i * 3 + 1], inputs[i * 3 + 2])
@@ -153,22 +86,50 @@ class NeuralNetwork:
                     inputs[i * 3] = balloon.x
                     inputs[i * 3 + 1] = balloon.y
                     inputs[i * 3 + 2] = balloon.z
-                    print(f"Nouvelle position ballon {i + 1}: {inputs[i * 3]}, {inputs[i * 3 + 1]}, {inputs[i * 3 + 2]}")
-
 
                 # 5. Calculer le score basé sur les positions mises à jour
                 input_for_arbitrator = [Vector3(inputs[i * 3], inputs[i * 3 + 1], inputs[i * 3 + 2]) for i in range(data_model.num_balloons)]
                 score = self.arbitrator.turn_score(input_for_arbitrator)
-                # print(f"The score is {score}")
 
                 total_score += score
 
                 # 6. Calculer la perte (loss) et effectuer la rétropropagation
                 loss = -score  # L'objectif est de maximiser le score
-                self.backpropagate(inputs, predict, learning_rate)
+                self.backpropagate(inputs, score, learning_rate)  # Utilisation du score comme récompense
 
                 total_loss += loss
 
             # Afficher la perte totale et le score moyen pour l'epoch
             avg_score = total_score / len(training_data)
             print(f"Epoch {epoch + 1}/{epochs}, Loss: {total_loss}, Avg Score: {avg_score}")
+
+    def predict(self, data_model, inputs):
+        # Donner pour chaque tour la meilleure altitude pour chaque ballon
+        trajet = [[] for _ in range(data_model.turns)]
+        for turn in range(data_model.turns):
+            self.feedforward(inputs)
+            predict = self.output_layer
+
+            # Construire la liste des nouvelles positions des ballons prédites par le réseau
+            predicted_altitudes = [constrain_altitude(predict[i * 3], data_model.altitudes) for i in range(data_model.num_balloons)]
+
+            # Mettre à jour les positions des ballons en appliquant l'effet du vent
+            for i in range(data_model.num_balloons):
+                old_altitude = inputs[i * 3 + 2]
+
+                inputs[i * 3 + 2] = predicted_altitudes[i]
+                # Créer un objet Vector3 pour chaque ballon avec les nouvelles coordonnées
+                balloon = Vector3(inputs[i * 3], inputs[i * 3 + 1], inputs[i * 3 + 2])
+
+                # Mettre à jour la position du ballon en fonction du vent
+                data_model.updatePositionWithWind(balloon)
+
+                # Mettre à jour les coordonnées du ballon dans la liste des inputs
+                inputs[i * 3] = balloon.x
+                inputs[i * 3 + 1] = balloon.y
+                inputs[i * 3 + 2] = balloon.z
+
+                # Ajouter la variation d'altitude
+                trajet[turn].append(balloon.z - old_altitude)
+        return trajet
+
