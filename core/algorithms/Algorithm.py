@@ -104,5 +104,8 @@ class Algorithm(ABC):
             case "ml":
                 from .machine_learning.MachineLearning import MachineLearning
                 return MachineLearning(data)
+            case "CBBA":
+                from .CBBA.CBBA import CBBA
+                return CBBA(data)
             case _:
                 raise ValueError("Algo not found")
