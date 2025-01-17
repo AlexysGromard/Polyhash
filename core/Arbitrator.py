@@ -142,3 +142,16 @@ class Arbitrator:
             grid[caseX][caseY].append(loon)
 
         return grid 
+    
+    def loon_score(self, loon: Vector3) -> int:
+        """Retourne le score fait par un seul ballon 
+            TODO: Optimiser (par Mathis)
+
+        Args:
+            loon (Vector3): Position du-dit ballon
+
+        Returns:
+            int: Score effectué par ce ballon lors de ce tour.
+        """
+
+        return self.turn_score([loon])
