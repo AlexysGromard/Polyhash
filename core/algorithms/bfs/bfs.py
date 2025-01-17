@@ -9,6 +9,7 @@ from ...models import DataModel,Vector3
 from ...utils import DebugPrinter
 from ..Algorithm import Algorithm
 from core import Arbitrator
+from ..GraphGenerator import GraphGenerator
 
 class BFS(Algorithm):
     """
@@ -29,37 +30,6 @@ class BFS(Algorithm):
         super().__init__(data)
         self.arbitrator = Arbitrator(data)
 
-    def graph_generation(self) -> list[list[int]]:
-        """
-        Generate the graph of the problem
-
-        Returns:
-        """
-        # Création des arêtes
-        print("Generating graph")
-        self.graph = {}
-        for row in range(self.data.rows):
-            for col in range(self.data.cols):
-                for alt in range(self.data.altitudes):
-                    self.graph[(row, col, alt)] = []
-
-                    # Récupérer le vent
-                    wind = self.data.wind_grids[alt][row][col]
-
-                    # Récupérer la nouvelle position
-                    new_row = row + wind.x
-                    new_col = col + wind.y
-
-                    # Si la nouvelle position n'est pas dans la grille, on ne l'ajoute pas
-                    if new_row < 0 or new_row >= self.data.rows or new_col < 0 or new_col >= self.data.cols:
-                        continue
-
-                    # Récupérer le nombre de points obtenus si l'on se rend à cette position
-                    points = self.arbitrator.score_for_ballon(Vector3(new_row, new_col, alt)) # C'est le poids de l'arête
-
-                    # Ajouter l'arête
-                    self.graph[(row, col, alt)].append(((row, col, alt), points))
-        print("Graph generated")
 
     def compute_one_time(self) -> (list[list[int]], int):
         # Init des variables
@@ -123,12 +93,13 @@ class BFS(Algorithm):
             list[list[int]]: order of the balloons' movements
         """
 
-        self.graph_generation()
+        graphGenerator = GraphGenerator(self.data)
+        self.graph = graphGenerator.graph_generation()
 
         best_trajectory = []
         best_points = 0
 
-        num_iterations = 10000000
+        num_iterations = 50000
         num_processes = multiprocessing.cpu_count()  # Utilise tous les cœurs disponibles
 
         # Création du pool de processus
