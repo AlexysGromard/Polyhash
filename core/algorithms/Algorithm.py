@@ -98,6 +98,9 @@ class Algorithm(ABC):
             case "RSMT":
                 from .R_SMT.r_smt import RSMT
                 return RSMT(data)
+            case "RSMTv2":
+                from .R_SMT.r_smt_v2 import RSMTv2
+                return RSMTv2(data)
             case "RSMTv3":
                 from .R_SMT.r_smt_v3 import RSMTv3
                 return RSMTv3(data)
