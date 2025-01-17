@@ -1,6 +1,6 @@
 import random
 from core.models import DataModel,Vector3
-from core.ArbitratorOpti import ArbitratorOpti
+from core import Arbitrator
 from time import *
 import multiprocessing
 
@@ -15,7 +15,7 @@ class RSMTv2:
         self.d = data
 
         #super().__init__(data)
-        self.arbitator = ArbitratorOpti(data)
+        self.arbitator = Arbitrator(data)
         self.d = data
 
     def compute(self, time=100):

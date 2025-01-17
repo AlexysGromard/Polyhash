@@ -1,7 +1,6 @@
 import random
 from core.models import DataModel, Vector3
 from core import Arbitrator
-from core.ArbitratorOpti import ArbitratorOpti
 from ..Algorithm import Algorithm
 
 

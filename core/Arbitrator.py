@@ -1,5 +1,3 @@
-# arbitrator.py
-
 from .models import *
 
 class Arbitrator:
@@ -25,21 +23,10 @@ class Arbitrator:
         # Validate and initialize attributes
         if not isinstance(data_model.target_cells, list) or not all(isinstance(cell, Vector3) for cell in data_model.target_cells):
             raise TypeError("target_cells must be a list of Vector3 objects.")
-        if not isinstance(data_model.coverage_radius, int) or data_model.coverage_radius < 0:
+        elif not isinstance(data_model.coverage_radius, int) or data_model.coverage_radius < 0:
             raise ValueError("coverage_radius must be a non-negative integer.")
-
-        self.score: int = 0
-        self.target_cells: list[Vector3] = data_model.target_cells
-        self.coverage_radius: int = data_model.coverage_radius
-
-        width: int = data_model.cols
-        height: int = data_model.rows
-
-        # Initialize the coverage map
-        if height > 0 and width > 0:
-            self.coverage_map: list[list[int]] = [[0 for _ in range(width)] for _ in range(height)]
-        else:
-            raise ValueError(f"Invalid grid size: height={height}, width={width}. Both must be > 0.")
+        else :
+            self.data = data_model
 
     def turn_score(self, balloons: list[Vector3], debug: bool = False) -> int:
         '''
@@ -76,59 +63,82 @@ class Arbitrator:
                 u (int): The row of the balloon.
                 v (int): The column of the balloon.
                 coverage_radius (int): The coverage radius of the balloon.
-
+            
             Returns:
                 bool: True if the target is covered by the balloon, False otherwise.
             '''
             return (r - u) ** 2 + columndist(c, v) ** 2 <= coverage_radius_sq
-
-        # Check if all arguments are provided correctly
-        if not balloons or not self.target_cells or self.coverage_radius < 0:
-            raise TypeError("Invalid arguments.")
-
+        
         # Pre-calculate constants
-        coverage_radius_sq = self.coverage_radius ** 2
-        grid_width = self.get_grid_size()[1]
+        coverage_radius_sq = self.data.coverage_radius ** 2
+        grid_width = self.data.cols
+
+        #Generate loons grid
+        loonGrid = self.sortLoons(balloons)
+        sizeX = len(loonGrid)
+        sizeY  = len(loonGrid[0])
 
         score = 0
 
         # Test for each target if it is covered by a balloon
-        for target in self.target_cells:
-            # Get radius
-            u, v = target.x, target.y # Target coordinates
-            for balloon in balloons:
-                # Check if the target is covered by the balloon and the balloon is not at the ground
-                if is_covered(balloon.x, balloon.y, u, v) and balloon.z != 0:
-                    if debug:
-                        print(f"Balloon at ({balloon.x}, {balloon.y}) covers target at ({u}, {v})")
+        for target in self.data.target_cells:
+
+
+            #Look where might be the loons
+            caseX = min(target.x // self.data.coverage_radius, sizeX - 1 )
+            caseY = min(target.y// self.data.coverage_radius, sizeY - 1 )
+
+                        
+            loons = []
+            loons += loonGrid[caseX][caseY]
+            loons += loonGrid[(caseX + 1) % sizeX][caseY]
+            loons += loonGrid[caseX - 1][caseY]
+            loons += loonGrid[caseX][caseY - 1]
+            loons += loonGrid[caseX][(caseY + 1) % sizeY]
+            loons += loonGrid[caseX - 1][caseY - 1]
+            loons += loonGrid[caseX - 1][(caseY + 1) % sizeY]
+            loons += loonGrid[(caseX + 1) % sizeX][caseY - 1]
+            loons += loonGrid[(caseX + 1) % sizeX][(caseY + 1)  % sizeY]
+            
+
+            for balloon in loons:
+                # Check if the balloon altitude is not 0
+                if balloon.z == 0:
+                    break
+                # Check if the target is covered by the balloon
+                elif is_covered(balloon.x, balloon.y, target.x, target.y):
                     score += 1
                     break
         return score
 
-    def print_coverage_map(self):
+    def sortLoons(self, loons: list[Vector3]) -> list[list[Vector3]]:
         '''
-        The function to print the coverage map of the solution.
-        '''
-        for row in self.coverage_map:
-            print('  '.join(map(str, row)))
-
-    def get_score(self) -> int:
-        '''
-        The function to return the score of the solution.
-        '''
-        return self.score
-
-    def get_coverage_map(self) -> list[list[int]]:
-        '''
-        The function to return the coverage map of the solution.
-        '''
-        return self.coverage_map
-    
-    def get_grid_size(self) -> tuple[int, int]:
-        '''
-        The function to return the grid size.
-
+        Generate a grid where loons are sorted by area of with/height = coverRadius
+        Args:
+            loons (list[vector]): The list of balloons. Vector3(x, y) where x is the row and y is the column.
+            
         Returns:
-            tuple[int, int]: The grid [height, width].
+            list[list[Vector3]]: The grid with the sorted loons.
         '''
-        return len(self.coverage_map), len(self.coverage_map[0])
+
+
+        x = self.data.rows // self.data.coverage_radius
+        y = self.data.cols // self.data.coverage_radius
+        grid = [
+                [
+                    [] 
+                    for _ in range(0, y)
+                ] 
+                for _ in range(0, x)
+            ]
+
+        for loon in loons:
+            
+            #Loon position in grid
+            caseX = min(loon.x // self.data.coverage_radius, x - 1)
+            caseY = min(loon.y // self.data.coverage_radius, y - 1)
+            
+            #Adding balloon to grid
+            grid[caseX][caseY].append(loon)
+
+        return grid 
