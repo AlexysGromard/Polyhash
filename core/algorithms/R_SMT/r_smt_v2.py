@@ -1,32 +1,43 @@
 import random
 from core.models import DataModel,Vector3
-from core.Arbitrator import Arbitrator
+from core.ArbitratorOpti import ArbitratorOpti
 from time import *
 import multiprocessing
 
 class RSMTv2:
-    def compute(self, data: 'DataModel', time=100):
-        self.d = data
-        self.arbitator = Arbitrator(data)
+    def __init__(self, data: DataModel) -> None:
+        """
+        Constructor for RSMT class.
 
+        Args:
+            data (DataModel): Data model for the problem.
+        """
+        self.d = data
+
+        #super().__init__(data)
+        self.arbitator = ArbitratorOpti(data)
+        self.d = data
+
+    def compute(self, time=100):
         #Tuning parameters
         self.param_time = time
         
         #Computing the path
-        result = self._process()
+        result = self._processMultiprocessing()
 
         #If the algorithm find a way, it return the path, else it restart the algorithm
         if result[0] == True:
             return result[1]
-        print("Hello")
+        
         #The algo didn't find a path, so let's create another algo
-        return self.compute(data)
+        return self.compute()
 
     
     def _convertData():
         pass
 
-    def _process(self)-> tuple[bool, list[list[int]], int, int, list[int]]:
+   
+    def _processMultiprocessing(self):
         """Fonctionnement de l'algo: cherche (aléatoirement) un meilleur path pour les X premiers
         tours. Ensuite, cherche le meilleur path pour les X tours suivant... Fonctionnement par bloc
 
@@ -40,7 +51,7 @@ class RSMTv2:
         
         #Calcul du pas (les X tours par bloc)
         tours = self.d.turns
-        pas = 50
+        pas = 25
         if tours < 10:
             pas = 12
         elif tours < 30:
@@ -49,7 +60,7 @@ class RSMTv2:
             pas = 20
 
         #Tableau du nombre de tour et temps accordé pour chaque bloc de calcul (en fonction du pas)
-        tab = [(pas, self.param_time / (tours / pas)) for _ in range(int(tours / pas) - 1)]
+        tab = [[pas, self.param_time / (tours / pas)] for _ in range(int(tours / pas) - 1)]
 
         #On vérifie qu'on a le bon nombre de tour:
         toAdd = tours
@@ -57,49 +68,42 @@ class RSMTv2:
             toAdd -= nbTours
         tab.append((toAdd,  self.param_time / (tours / pas)))
         
-
         #On lance les tours de blocs (doit faire {nbTour} tours avec un temps max de {temps})
         for nbTour, temps in tab:
-            start = time()
-            
+
+            best = [False, 0, 0, 0, []]
+            average = 0
             #Compute a first random solution (the actual best-one)
-            best = self._explore(nbTour, 
-                             fullPath[5],
-                             [0 for _ in  range(self.d.turns)], 
-                             0)
-
-            #count the number of path tried for this chunk (print purposes)
-            cnt = 1
-
-            #Compute other path if we've got the time
-            while time() - start < temps:
-                cnt +=  1
-                self.queue = 40
-                r = self._explore(nbTour, 
-                               fullPath[5],
-                                best[4], 
-                                0)
-                if r[3] > best[3]:
-                    best = r
-
+            for _ in range(20):
+                with multiprocessing.Pool(16) as pool:
+                    results = pool.starmap(self._explore, [(nbTour, 
+                                    fullPath[5],
+                                    [0 for _ in  range(self.d.turns)], 
+                                    0) for _ in range(8)])
+                
+                
+                for r in results:
+                   
+                    average += r[3]
+                    if r[3] >= best[3]:
+                        best = r
+            average /= 240
+            
             #Check if the exploration find a path (if False, the previous 
             # chunk was wrong: there isn't any way to contiune the path without 
             # having a loon out of the map)
             if best[0] == False:
-                print("process dies:", id)
+                print("process dies:")
                 return (0, 0, 0, 0, 0)
             
 
-            #print(f"Our best is: {best[3]}, and we try: {cnt} times id {id}")
+            print(f"Our best is: {best[3]}, and we try: {8} times. Average is: {average}")
 
             #Adding the chunk to the fullPath
             fullPath[1] = fullPath[1] + best[1]
             fullPath[3]+= best[3]
             fullPath[5] = best[5]
-
-
-
-
+        print(f"Score is: {fullPath[3]}")
         return fullPath
 
     def _explore(self, turn: int, balls: list[Vector3], best: list[int], score: int, confirmTest = False) -> tuple[bool, list[list[int]], int, int, list[int]]:
@@ -160,10 +164,10 @@ class RSMTv2:
                     if not loonWindResult:
                         #Remove the alt variation because it creates a problem:
                         altVariations[i].remove(choosen[i])
+                        newBalls[i] = False
+           
             #Calculate the score:
-            Newscore = score + self.arbitator.turn_score(newBalls)
-
-            
+            Newscore = score + self.arbitator.turn_score(newBalls)    
           
             #Si c'est le dernier tour:
             if turn == 1:

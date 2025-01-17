@@ -1,6 +1,7 @@
 import random
 from core.models import DataModel, Vector3
 from core import Arbitrator
+from core.ArbitratorOpti import ArbitratorOpti
 from ..Algorithm import Algorithm
 
 
@@ -50,12 +51,14 @@ class RSMT(Algorithm):
         Returns:
             list[list[int]]: Optimal altitude adjustments for each balloon.
         """
-        return self._explore(
+        r = self._explore(
             self.data.turns,
             [Vector3(self.data.starting_cell.x, self.data.starting_cell.y, 0) for _ in range(self.data.num_balloons)],
             [0] * self.data.turns,
             0
-        )[1]
+        )
+        print(f"score: {r[3]}")
+        return r[1]
 
     def _explore(self, turn: int, balloons: list[Vector3], best: list[int], score: int) -> tuple:
         """
