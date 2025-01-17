@@ -11,13 +11,13 @@ class CBBA(Algorithm):
     Cluster Based Balloon Allocation
     '''
 
-    def euclidean_distance(self, a, b):
+    def euclidean_distance(self, a, b): # TODO : A TESTER
         '''
         Compute the euclidean distance between two points
         '''
         return ((a[0] - b[0])**2 + (a[1] - b[1])**2) ** 0.5
 
-    def create_clusters(self, targets, coverage_radius):
+    def create_clusters(self, targets, coverage_radius): # TODO : A TESTER
         '''
         Create clusters of targets
 
@@ -31,7 +31,7 @@ class CBBA(Algorithm):
         clusters = []
         visited = set()
 
-        for i, target in enumerate(targets):
+        for target in targets:
             if target in visited:
                 continue
 
@@ -40,7 +40,7 @@ class CBBA(Algorithm):
             visited.add(target)
 
             # Add all targets within the coverage radius
-            for j, target2 in enumerate(targets):
+            for target2 in targets:
                 if target2 in visited:
                     continue
 
