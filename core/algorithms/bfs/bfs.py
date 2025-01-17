@@ -5,6 +5,7 @@ from collections import deque
 from ...models import DataModel,Vector3
 from ...utils import DebugPrinter
 from ..Algorithm import Algorithm
+from core import Arbitrator
 
 class BFS(Algorithm):
     """
@@ -23,35 +24,27 @@ class BFS(Algorithm):
             data (DataModel): _description_
         """
         super().__init__(data)
+        self.arbitrator = Arbitrator(data)
 
     def graph_generation(self) -> list[list[int]]:
         """
         Generate the graph of the problem
 
         Returns:
-            list[list[int]]: graph of the problem
         """
-        graph = list()
-        queue = deque()
-        queue.append(Vector3(0, 0, 1))
-        visited = list()
+        # Création des arêtes
+        self.graph = {}
+        for row in range(self.data.height):
+            for col in range(self.data.width):
+                for alt in range(self.data.altitudes):
+                    self.graph[(row, col, alt)] = []
 
-        while queue:
-            # Ajout a la queue les autres cases de l'altitude si elles ne sont pas visitées
-            current = queue.popleft()
-            visited.append(current)
+                    # Récupérer le vent
+                    wind = self.data.wind_grids[row][col][alt]
 
-            # Vérifier les cases de l'altitude
-            for i in range(1, self.data.cols):
-                if Vector3(current.x, current.y, i) not in visited:
-                    # Ajout a la queue les autres cases de l'altitude si elles ne sont pas visitées
-                    queue.append(Vector3(current.x, current.y, i))
-                    # Ajouter l'arete au graphe
-                    graph.append([current, Vector3(current.x, current.y, i)])
+                    # Récupérer le nombre de points obtenus si l'on se rend à cette position
+                    points = self.arbitrator.
 
-            # Ajouter l'arete au graphe entre la case actuelle et les cases ou il peut aller avec le vent
-            wind = self.data.wind_grids[current.x][current.y][current.z]
-            graph.append([current, Vector3(current.x + wind.x, current.y + wind.y, current.z + wind.z)])
 
     def compute(self) -> list[list[int]]:
         """

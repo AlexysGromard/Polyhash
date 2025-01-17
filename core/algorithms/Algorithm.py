@@ -98,6 +98,9 @@ class Algorithm(ABC):
             case "RSMT":
                 from .R_SMT.r_smt import RSMT
                 return RSMT(data)
+            case "bfs":
+                from .bfs.bfs import BFS
+                return BFS(data)
             case "ml":
                 from .machine_learning.MachineLearning import MachineLearning
                 return MachineLearning(data)

@@ -7,7 +7,7 @@ from core import Arbitrator
 
 def constrain_altitude(raw_value, hauteur_max):
     """Contraint la valeur d'altitude entre 1 et hauteur_max."""
-    return int(1 + raw_value * (hauteur_max))
+    return max(1, min(hauteur_max, int(raw_value * hauteur_max)))
 
 
 class NeuralNetwork:
@@ -31,7 +31,7 @@ class NeuralNetwork:
                         for j in range(self.hidden_size)]
 
         # Appliquer une activation (par exemple, sigmoïde)
-        self.output_layer = [1 / (1 + exp(-x)) for x in hidden_layer]  # Sigmoïde
+        self.output_layer = [1 / (1 + exp(-max(min(x, 700), -700))) for x in hidden_layer]  # Sigmoïde
         return self.output_layer
 
     def backpropagate(self, inputs, reward, learning_rate=0.01):
@@ -80,12 +80,20 @@ class NeuralNetwork:
                     balloon = Vector3(inputs[i * 3], inputs[i * 3 + 1], inputs[i * 3 + 2])
 
                     # Mettre à jour la position du ballon en fonction du vent
-                    data_model.updatePositionWithWind(balloon)
+                    is_on_map = data_model.updatePositionWithWind(balloon)
+
+                    if is_on_map is False:
+                        # Si le ballon est sorti de la carte, on arrete l'entraînement
+                        # print(f"Balloon {i + 1} is out of the map at the position {balloon}")
+                        break
 
                     # Mettre à jour les coordonnées du ballon dans la liste des inputs
                     inputs[i * 3] = balloon.x
                     inputs[i * 3 + 1] = balloon.y
                     inputs[i * 3 + 2] = balloon.z
+
+                    # Afficher les nouvelles positions des ballons
+                    # print(f"Balloon {i + 1}: {balloon}")
 
                 # 5. Calculer le score basé sur les positions mises à jour
                 input_for_arbitrator = [Vector3(inputs[i * 3], inputs[i * 3 + 1], inputs[i * 3 + 2]) for i in range(data_model.num_balloons)]
@@ -100,7 +108,6 @@ class NeuralNetwork:
                 total_loss += loss
 
             # Afficher la perte totale et le score moyen pour l'epoch
-    
             print(f"Epoch {epoch + 1}/{epochs}, Loss: {total_loss}, total_score: {total_score}")
 
     def predict(self, data_model, inputs):
@@ -110,8 +117,14 @@ class NeuralNetwork:
             self.feedforward(inputs)
             predict = self.output_layer
 
+            # Debug: Afficher les valeurs prédites
+            print(f"Turn {turn + 1}: Predicted values: {predict}")
+
             # Construire la liste des nouvelles positions des ballons prédites par le réseau
             predicted_altitudes = [constrain_altitude(predict[i * 3], data_model.altitudes) for i in range(data_model.num_balloons)]
+
+            # Debug: Afficher les altitudes prédites après contrainte
+            print(f"Turn {turn + 1}: Constrained altitudes: {predicted_altitudes}")
 
             # Mettre à jour les positions des ballons en appliquant l'effet du vent
             for i in range(data_model.num_balloons):
@@ -129,7 +142,9 @@ class NeuralNetwork:
                 inputs[i * 3 + 1] = balloon.y
                 inputs[i * 3 + 2] = balloon.z
 
+                # Debug: Afficher les nouvelles positions des ballons
+                print(f"Balloon {i + 1}: {balloon}")
+
                 # Ajouter la variation d'altitude
                 trajet[turn].append(balloon.z - old_altitude)
         return trajet
-
