@@ -11,11 +11,11 @@ class CBBA(Algorithm):
     Cluster Based Balloon Allocation
     '''
 
-    def euclidean_distance(a, b):
+    def euclidean_distance(self, a, b):
         '''
         Compute the euclidean distance between two points
         '''
-        return ((a[0] - b[0])**2 + (a[1] - b[1])**2 + (a[2] - b[2])**2) ** 0.5
+        return ((a[0] - b[0])**2 + (a[1] - b[1])**2) ** 0.5
 
     def create_clusters(self, targets, coverage_radius):
         '''
@@ -32,29 +32,29 @@ class CBBA(Algorithm):
         visited = set()
 
         for i, target in enumerate(targets):
-            if i in visited:
+            if target in visited:
                 continue
 
             # Create a new cluster
-            cluster = [i]
-            visited.add(i)
+            cluster = [target]
+            visited.add(target)
 
             # Add all targets within the coverage radius
             for j, target2 in enumerate(targets):
-                if j in visited:
+                if target2 in visited:
                     continue
 
-                if self.euclidean_distance(target, target2) <= coverage_radius:
-                    cluster.append(j)
-                    visited.add(j)
+                if self.euclidean_distance((target.x, target.y), (target2.x, target2.y)) <= coverage_radius:
+                    cluster.append(target2)
+                    visited.add(target2)
 
             clusters.append(cluster)
 
         # Calculate the center of each cluster
         cluster_centers = []
         for cluster in clusters:
-            center_x = sum(x for x, _, _ in cluster) / len(cluster)
-            center_y = sum(y for _, y, _ in cluster) / len(cluster)
+            center_x = round(sum(v.x for v in cluster) / len(cluster))
+            center_y = round(sum(v.y for v in cluster) / len(cluster))
             cluster_centers.append(Vector3(center_x, center_y, 0))
 
         return clusters, cluster_centers
@@ -68,8 +68,14 @@ class CBBA(Algorithm):
         self.arbitrator = Arbitrator(data)
 
     def compute(self):
-
-        return
+        '''
+        Compute the trajectory of the balloons
+        '''
+        # Create clusters
+        clusters, cluster_centers = self.create_clusters(self.data.target_cells, self.data.coverage_radius)
+        for cluster in clusters:
+            print(f"Cluster: {cluster} et center: {cluster_centers[clusters.index(cluster)]}")
+        return []
 
     def _convert_data(self):
         pass

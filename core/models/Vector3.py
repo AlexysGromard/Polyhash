@@ -87,5 +87,6 @@ class Vector3:
             Vector3: A copy of the Vector3 object.
         """
         return Vector3(self.x, self.y, self.z)
-    
-    
+
+    def __hash__(self):
+        return hash((self.x, self.y, self.z))
