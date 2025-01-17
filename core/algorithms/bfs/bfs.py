@@ -1,6 +1,7 @@
 # bfs.py
 
 import random
+import multiprocessing
 
 from collections import deque
 
@@ -60,16 +61,7 @@ class BFS(Algorithm):
                     self.graph[(row, col, alt)].append(((row, col, alt), points))
         print("Graph generated")
 
-    def compute(self) -> list[list[int]]:
-        """
-        Compute the algorithm
-
-        Returns:
-            list[list[int]]: order of the balloons' movements
-        """
-
-        self.graph_generation()
-
+    def compute_one_time(self) -> (list[list[int]], int):
         # Init des variables
         total_points = 0
         trajectory = [[] for _ in range(self.data.turns)]
@@ -114,8 +106,43 @@ class BFS(Algorithm):
 
             # Calculer le score
             total_points += self.arbitrator.turn_score(ballons)
-        print(f"Total points: {total_points}")
-        return trajectory
+        return (trajectory, total_points)
+    
+    def _worker(self, _) -> tuple[list[int], int]:
+        """
+        Fonction exécutée par chaque processus.
+        """
+        return self.compute_one_time()
+
+
+    def compute(self) -> list[list[int]]:
+        """
+        Compute the algorithm
+
+        Returns:
+            list[list[int]]: order of the balloons' movements
+        """
+
+        self.graph_generation()
+
+        best_trajectory = []
+        best_points = 0
+
+        num_iterations = 10000000
+        num_processes = multiprocessing.cpu_count()  # Utilise tous les cœurs disponibles
+
+        # Création du pool de processus
+        with multiprocessing.Pool(processes=num_processes) as pool:
+            results = pool.map(self._worker, range(num_iterations))
+
+        # Analyse des résultats
+        for trajectory, points in results:
+            if points > best_points:
+                best_points = points
+                best_trajectory = trajectory
+
+        print(f"Best points: {best_points}")
+        return best_trajectory
 
     def _convert_data(self) -> None:
         """
