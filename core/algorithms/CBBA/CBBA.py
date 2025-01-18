@@ -10,6 +10,12 @@ class CBBA(Algorithm):
     '''
     Cluster Based Balloon Allocation
     '''
+    def __init__(self, data: 'DataModel') -> None:
+        '''
+        Constructor of the CBBA class
+        '''
+        super().__init__(data)
+        self.arbitrator = Arbitrator(data)
 
     def euclidean_distance(self, a, b): # TODO : A TESTER
         '''
@@ -81,8 +87,8 @@ class CBBA(Algorithm):
             targets (list[Vector3]): list of targets
             coverage_radius (float): coverage radius of the balloons
         Returns:
-            clusters (list[list[int]]): list of clusters
-            cluster_centers (list[Vector3]): list of cluster
+            clusters (list[list[Vector3]]): list of clusters
+            cluster_centers (list[Vector3]): list of cluster centers
         '''
         # Mettre les targets sous forme de points (x, y)
         clusters = self.wpgma(targets, coverage_radius)
@@ -96,13 +102,35 @@ class CBBA(Algorithm):
 
         return clusters, cluster_centers
 
+    def assign_clusters_to_balloons(self, clusters, balloons):
+        '''
+        Assign clusters to balloons
 
-    def __init__(self, data: 'DataModel') -> None:
+        Args:
+            clusters (list[Vector3]): list of cluster centers
+            balloons (list[Vector3]): list of balloons
+
+        Returns:
+            assignments (dict): dictionary containing the assignment of each balloon to a
+                                cluster (balloon index -> cluster index)
         '''
-        Constructor of the CDBA class
-        '''
-        super().__init__(data)
-        self.arbitrator = Arbitrator(data)
+        # Calculate the distance between each balloon and each cluster
+        distances = []
+        for i, balloon in enumerate(balloons):
+            for j, cluster in enumerate(clusters):
+                dist = self.euclidean_distance((balloon.x, balloon.y), (cluster.x, cluster.y))
+                distances.append((i, j, dist))
+
+        # Sort the distances
+        distances.sort(key=lambda x: x[2])
+
+        # Assign clusters to balloons
+        assignments = {}
+        for i, j, dist in distances:
+            if i not in assignments and j not in assignments.values():
+                assignments[i] = j
+
+        return assignments
 
     def compute(self):
         '''
@@ -110,8 +138,24 @@ class CBBA(Algorithm):
         '''
         # Create clusters
         clusters, cluster_centers = self.create_clusters(self.data.target_cells, self.data.coverage_radius)
+        ## DEBUG
         for cluster in clusters:
             print(f"Cluster: {cluster} et center: {cluster_centers[clusters.index(cluster)]}")
+
+        # Initialize variables
+        balloons = [self.data.starting_cell for _ in range(self.data.num_balloons)]
+        trajectory = [[] for _ in range(self.data.turns)]
+        total_points = 0
+
+        # Compute the trajectory
+        for turn in range(self.data.turns):
+            # Assign clusters to balloons
+            assignments = self.assign_clusters_to_balloons(cluster_centers, balloons)
+            ## DEBUG
+            for assignment in assignments:
+                print(f"Balloon {assignment} assigned to cluster {assignments[assignment]}")
+            break
+
         return []
 
     def _convert_data(self):
